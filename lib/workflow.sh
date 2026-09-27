@@ -1,4 +1,4 @@
-#!/opt/homebrew/bin/bash
+#!/usr/bin/env bash
 # workflow.sh — Elastic Workflows API wrapper
 #
 # Manages KK automation workflows running serverlessly on Kibana.
@@ -219,7 +219,8 @@ _wf_sync_local_enabled() {
     local file_name
     file_name="$(grep '^name:' "$f" | head -1 | sed 's/^name:[[:space:]]*//' | tr -d "'\"")"
     if [[ "$file_name" == "$name" ]]; then
-      sed -i '' "s/^enabled: .*/enabled: $state/" "$f"
+      # Portable in-place edit (BSD and GNU sed disagree on -i)
+      sed "s/^enabled: .*/enabled: $state/" "$f" > "$f.tmp" && mv "$f.tmp" "$f"
       echo "  Synced local: $f"
       return 0
     fi
