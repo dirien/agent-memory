@@ -23,12 +23,17 @@ resource "elasticstack_kibana_dashboard" "overview" {
     value = 30000
   }
 
-  panels = [for panel in local.dashboard.panels : {
-    id          = try(panel.id, null)
-    type        = panel.type
-    grid        = panel.grid
-    config_json = jsonencode(panel.config)
-  }]
+  # Lists of objects are blocks in Pulumi HCL (single objects stay
+  # arguments), so generate one panels block per exported panel.
+  dynamic "panels" {
+    for_each = local.dashboard.panels
+    content {
+      id          = try(panels.value.id, null)
+      type        = panels.value.type
+      grid        = panels.value.grid
+      config_json = jsonencode(panels.value.config)
+    }
+  }
 
   depends_on = [elasticstack_elasticsearch_index.memory]
 }
