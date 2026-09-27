@@ -58,6 +58,31 @@ The project's own API key (the one `bridge` uses) is created by Pulumi and lands
 in the workspace's `.env` through `scripts/write-env.sh`. It is scoped to the
 agent-memory indices only.
 
+## Known issue: `pulumi up` and the proxy-managed Pulumi token
+
+The credential proxy sets `Authorization: token <PAT>` on every request to
+`api.pulumi.com`, whatever the CLI sent. Read-only commands (`whoami`,
+`preview`'s plan, `pulumi env`) are fine, but an update authenticates its
+event, checkpoint and `complete` calls with a per-update `update-token`, and
+those come back `401`. `pulumi up` then fails with *"this command requires
+logging in"* after it has already changed cloud resources.
+
+Until the proxy only substitutes the `proxy-managed` placeholder, give the
+sandbox a real token and drop the proxy binding for it (on the host):
+
+```bash
+sbx secret ls                                   # find the pulumi binding
+sbx secret rm -g pulumi                         # or remove it for this sandbox only
+sbx exec -d <sandbox> bash -c \
+  "printf 'export PULUMI_ACCESS_TOKEN=%s\n' \"$PULUMI_ACCESS_TOKEN\" >> /etc/sandbox-persistent.sh"
+```
+
+Check from inside the sandbox: a bogus token must now be rejected.
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -H 'Authorization: token bogus' https://api.pulumi.com/api/user   # 401
+```
+
 ## Validate
 
 `sbx` is a host tool, so validate on the host:
