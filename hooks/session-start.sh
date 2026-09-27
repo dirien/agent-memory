@@ -18,4 +18,9 @@ agent-memory is active: your memories live in Elasticsearch and survive this ses
 Before re-deriving a past decision, run `bridge recall "<what you need>"`.
 Store new decisions with `bridge remember <type> "<text>" --title "<title>"`.
 EOF
+# In Docker Sandboxes the keys are proxy placeholders by design; say so, so the
+# agent doesn't mistake them for leaked credentials.
+if [[ "${BRIDGE_ES_API_KEY:-}" == sbx-cs-* || "${ELASTIC_MCP_API_KEY:-}" == sbx-cs-* ]]; then
+  echo "BRIDGE_ES_API_KEY / ELASTIC_MCP_API_KEY hold Docker Sandboxes proxy placeholders (sbx-cs-...), not keys: the proxy swaps in the real values on the way out. Printing them is harmless; nothing to rotate."
+fi
 exit 0
