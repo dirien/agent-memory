@@ -195,7 +195,7 @@ FROM ${IDX_MEMORY} METADATA _id, _score, _index
 | EVAL final_score = _score * DECAY(created_at, NOW(), $(_esql_decay_duration "$BRIDGE_MEMORY_DECAY_WINDOW"))
 | EVAL display = COALESCE(title, SUBSTRING(content, 1, 80))
 | SORT final_score DESC | LIMIT ${limit}
-| KEEP memory_id, type, display, access_scope, agent
+| KEEP memory_id, type, display, access_scope, agent, content
 ESQL
 )"
       ;;
@@ -214,8 +214,10 @@ ESQL
       echo "No memories found for: $query"
       return
     fi
-    # KEEP order: memory_id[0], type[1], display[2], access_scope[3], agent[4]
-    echo "$result" | jq -r '.values[] | "[\(.[1])] \(.[2]) (scope: \(.[3]), agent: \(.[4])) [\(.[0])]"'
+    # KEEP order: memory_id[0], type[1], display[2], access_scope[3], agent[4], content[5]
+    # The content excerpt matters: the title alone often isn't the answer.
+    echo "$result" | jq -r '.values[] | "[\(.[1])] \(.[2]) (scope: \(.[3]), agent: \(.[4])) [\(.[0])]"
+      + (if ((.[5] // "") | length) > 0 then "\n    " + ((.[5] | gsub("\\s+"; " ") | ltrimstr(" "))[0:300]) else "" end)'
   else
     result="$(es_search "$IDX_MEMORY" "$search_body")"
     count="$(echo "$result" | jq '.hits.total.value // 0')"
@@ -223,7 +225,8 @@ ESQL
       echo "No memories found for: $query"
       return
     fi
-    echo "$result" | jq -r '.hits.hits[]._source | "[\(.type)] \(.title // .content[:80]) (scope: \(.access_scope), agent: \(.agent)) [\(.memory_id)]"'
+    echo "$result" | jq -r '.hits.hits[]._source | "[\(.type)] \(.title // .content[:80]) (scope: \(.access_scope), agent: \(.agent)) [\(.memory_id)]"
+      + (if ((.content // "") | length) > 0 then "\n    " + ((.content | gsub("\\s+"; " ") | ltrimstr(" "))[0:300]) else "" end)'
   fi
 }
 
