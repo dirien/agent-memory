@@ -14,9 +14,10 @@ _memory_dirs() {
     echo "$BRIDGE_MEMORY_PATH"
     return
   fi
-  # Derive from current project path (Claude Code convention)
+  # Derive from the project path the way Claude Code does: every
+  # non-alphanumeric character becomes '-'. Hooks get CLAUDE_PROJECT_DIR.
   local cwd_slug
-  cwd_slug="$(pwd | tr '/' '-')"
+  cwd_slug="$(printf '%s' "${CLAUDE_PROJECT_DIR:-$PWD}" | sed 's/[^a-zA-Z0-9]/-/g')"
   echo "$HOME/.claude/projects/${cwd_slug}/memory"
 }
 
@@ -86,10 +87,16 @@ memory_sync() {
 
     local title="" type="observation" description=""
     if [[ "$content" =~ ^--- ]]; then
-      title="$(echo "$content" | sed -n 's/^name: *//p' | head -1 || true)"
-      type="$(echo "$content" | sed -n 's/^type: *//p' | head -1 || true)"
-      description="$(echo "$content" | sed -n 's/^description: *//p' | head -1 || true)"
-      content="$(echo "$content" | sed '1,/^---$/d' | sed '1,/^---$/d')"
+      # Parse keys from the frontmatter block only. Claude Code nests `type:`
+      # under `metadata:`, so allow leading whitespace; strip wrapping quotes.
+      local frontmatter
+      frontmatter="$(echo "$content" | sed -n '2,/^---$/p' | sed '$d')"
+      title="$(echo "$frontmatter" | sed -n 's/^name: *//p' | head -1 | sed 's/^"\(.*\)"$/\1/' || true)"
+      type="$(echo "$frontmatter" | sed -n 's/^[[:space:]]*type: *//p' | head -1 | sed 's/^"\(.*\)"$/\1/' || true)"
+      description="$(echo "$frontmatter" | sed -n 's/^description: *//p' | head -1 | sed 's/^"\(.*\)"$/\1/' || true)"
+      # One pass drops line 1 through the closing '---'; a second pass would
+      # eat the body up to the next '---' (or EOF).
+      content="$(echo "$content" | sed '1,/^---$/d')"
     fi
 
     [[ -z "$title" ]] && title="$filename"
@@ -134,11 +141,9 @@ memory_sync() {
     result="$(es_index "$IDX_MEMORY" "$mem_id" "$doc" 2>/dev/null)"
     if echo "$result" | jq -e '.result == "created" or .result == "updated"' > /dev/null 2>&1; then
       synced=$((synced + 1))
-      if grep -q "^${filename}:" "$hash_file" 2>/dev/null; then
-        sed -i '' "s/^${filename}:.*/${filename}:${current_hash}/" "$hash_file"
-      else
-        echo "${filename}:${current_hash}" >> "$hash_file"
-      fi
+      # Portable replace of this file's hash line (BSD and GNU sed disagree on -i)
+      { grep -v "^${filename}:" "$hash_file" || true; echo "${filename}:${current_hash}"; } > "$hash_file.tmp"
+      mv "$hash_file.tmp" "$hash_file"
     else
       failed=$((failed + 1))
       $quiet || echo "Failed: $filename" >&2
