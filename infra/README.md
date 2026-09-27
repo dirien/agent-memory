@@ -78,7 +78,7 @@ field can take a few seconds while the inference endpoint warms up.
 | `dashboard_url` | the Agent Memory overview in Kibana |
 | `bridge_api_key` (secret) | the scoped key |
 | `dotenv` (secret) | a ready `.env`; `scripts/write-env.sh` merges it into `../.env` |
-| `mcp_url`, `mcp_api_key` (secret) | Agent Builder MCP endpoint and its read-only key; `scripts/write-env.sh` puts the host and key into `../.claude/settings.local.json` for the `elastic-memory` server in `.mcp.json` |
+| `mcp_url`, `mcp_api_key` (secret) | Agent Builder MCP endpoint and its read-only key; `scripts/write-env.sh` writes the host and key to `../.mcp.env` for the `elastic-memory` server in `.mcp.json` |
 
 ## Config
 

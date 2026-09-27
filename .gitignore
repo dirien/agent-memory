@@ -24,3 +24,6 @@ node_modules/
 # Local Pulumi state backend (scripts/pulumi.sh, AGENT_MEMORY_BACKEND=local)
 infra/.pulumi-state/
 infra/Pulumi.local.yaml
+
+# MCP placeholder values for .mcp.json (scripts/write-env.sh)
+.mcp.env

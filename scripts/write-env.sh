@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # write-env.sh — wire the Pulumi stack outputs into the local tooling:
 #
-#   .env                         bridge CLI settings (the `dotenv` output)
-#   .claude/settings.local.json  ELASTIC_KIBANA_HOST + ELASTIC_MCP_API_KEY for the
-#                                elastic-memory MCP server declared in .mcp.json
+#   .env      bridge CLI settings (the `dotenv` output)
+#   .mcp.env  ELASTIC_KIBANA_HOST + ELASTIC_MCP_API_KEY for the elastic-memory MCP
+#             server in .mcp.json. Claude Code expands those placeholders from its
+#             process environment only (not from settings.json `env`), so load it
+#             before starting claude: `set -a; . ./.mcp.env; set +a; claude`,
+#             or `sbx create --env-file .mcp.env ...`.
 #
 # Usage: scripts/write-env.sh            # uses the stack selected in infra/
 #        AGENT_MEMORY_STACK=org/agent-memory-infra/dev scripts/write-env.sh
@@ -15,7 +18,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ENV_FILE="$ROOT/.env"
-SETTINGS_FILE="$ROOT/.claude/settings.local.json"
+MCP_ENV_FILE="$ROOT/.mcp.env"
 STACK_ARGS=()
 if [[ -n "${AGENT_MEMORY_STACK:-}" && "${AGENT_MEMORY_BACKEND:-cloud}" == "cloud" ]]; then
   STACK_ARGS=(--stack "$AGENT_MEMORY_STACK")
@@ -40,17 +43,16 @@ umask 077
 mv "$ENV_FILE.tmp" "$ENV_FILE"
 echo "Wrote $ENV_FILE ($(grep -c '=' "$ENV_FILE") settings). Check it with: ./bridge status"
 
-# MCP: Claude Code expands ${ELASTIC_KIBANA_HOST} / ${ELASTIC_MCP_API_KEY} in
-# .mcp.json from the session environment, which settings.local.json provides.
+# MCP: values for the ${ELASTIC_KIBANA_HOST} / ${ELASTIC_MCP_API_KEY}
+# placeholders in .mcp.json.
 mcp_key="$(jq -r '.mcp_api_key // empty' <<< "$outputs")"
 kibana_host="$(jq -r '.kibana_url // empty' <<< "$outputs" | sed -E 's#^https?://##; s#/.*$##')"
 if [[ -n "$mcp_key" && -n "$kibana_host" ]]; then
-  mkdir -p "$(dirname "$SETTINGS_FILE")"
-  current="{}"
-  [[ -s "$SETTINGS_FILE" ]] && current="$(cat "$SETTINGS_FILE")"
-  jq --arg host "$kibana_host" --arg key "$mcp_key" \
-    '.env = ((.env // {}) + {ELASTIC_KIBANA_HOST: $host, ELASTIC_MCP_API_KEY: $key})' \
-    <<< "$current" > "$SETTINGS_FILE.tmp"
-  mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
-  echo "Wrote MCP settings to $SETTINGS_FILE (restart Claude Code to pick them up)"
+  {
+    echo "# Managed by scripts/write-env.sh. Load before starting claude: set -a; . ./.mcp.env; set +a"
+    echo "ELASTIC_KIBANA_HOST=$kibana_host"
+    echo "ELASTIC_MCP_API_KEY=$mcp_key"
+  } > "$MCP_ENV_FILE.tmp"
+  mv "$MCP_ENV_FILE.tmp" "$MCP_ENV_FILE"
+  echo "Wrote $MCP_ENV_FILE for the elastic-memory MCP server"
 fi

@@ -27,8 +27,9 @@ dependencies:
   mcp:
     # Agent Builder's MCP server in the project's Kibana: search, ES|QL and
     # index listing over the memory indices, with a read-only key from infra/.
-    # The placeholders are expanded by Claude Code at runtime; the values live
-    # in the gitignored .claude/settings.local.json (scripts/write-env.sh).
+    # Claude Code expands the placeholders from its process environment: load
+    # the gitignored .mcp.env (scripts/write-env.sh) before starting claude, or
+    # let Docker Sandboxes provide them (see kit/README.md).
     - name: elastic-memory
       registry: false
       transport: http
