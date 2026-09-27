@@ -23,10 +23,31 @@ Elasticsearch after each step:
   environment, Claude used only `platform_core_execute_esql` and returned both
   tables.
 
-Not verified yet (needs `sbx` on the host, which is what this run is for):
-`sbx kit validate`, the kit's startup step (bridge on PATH, `apm install`), the
-`set-custom` placeholder for the MCP key, the interactive MCP approval, the
-SessionEnd reason for `/exit`, and the `machine` name a new sandbox reports.
+Then run for real on 2026-09-27 in two fresh sandboxes, `mem-a` and `mem-b`
+(both created with `--kit ghcr.io/dirien/infrastructure-kit:v0.10.5 --kit ./kit`),
+each step checked in Elasticsearch from a third session:
+
+- `sbx secret set-custom --command "pulumi env get ..."` stored the MCP key as a
+  placeholder (`sbx-cs-…`); inside the sandbox `ELASTIC_MCP_API_KEY` held only the
+  placeholder, and `/mcp` showed `elastic-memory` connected and authenticated
+  (22 tools) after the one-time approval. A request with any other `ApiKey`
+  value got `401`; after rotating the key in Pulumi + ESC, the placeholder kept
+  working without touching the sbx secret.
+- SessionStart ran in each fresh sandbox; the heartbeat reports the sandbox
+  name (`mem-a`, `mem-b`) as `machine`.
+- Act 1: Claude stored the constraint with `bridge remember` this time (the
+  rehearsal had used auto-memory; both land in `agent-memory`), created the QR
+  task, and `/exit` logged `session-end` with reason `prompt_input_exit`; the
+  task was `suspended` two seconds later.
+- Act 2: asked only "regarding my prep for the talk, how was the wifi?", `mem-b`
+  called `elastic-memory` and answered with the constraint; every detail matched
+  the stored document, and the constraint exists nowhere in the repo.
+- Act 3: MCP only (Generate ES|QL, then Execute ES|QL); both tables matched the
+  same queries run directly against Elasticsearch.
+
+Still unchecked: the kit startup step's own effects (the `bridge` symlink in
+`~/.local/bin`, its `apm install` run). The hooks find `bridge` through the
+project directory either way.
 
 ## 0. Before you start (host)
 
