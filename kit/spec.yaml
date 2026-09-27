@@ -9,7 +9,7 @@ description: >-
   allows egress to Elastic Cloud and your project's endpoints. Settings come in
   with `sbx create --env`, keys as proxy placeholders; no .env files. Stack it
   after the infrastructure kit, which brings APM (and Pulumi).
-version: "0.2.0"
+version: "0.2.1"
 sourceURL: https://github.com/dirien/agent-memory
 licenses:
   - Apache-2.0
@@ -90,6 +90,10 @@ environment:
     AGENT_MEMORY_BACKEND: "${{ kit.args.backend }}"
     # Serverless round trips from the sandbox proxy can exceed the 5s default.
     BRIDGE_TIMEOUT: "10"
+    # bridge's online probe. Each proxied request takes about a second, and the
+    # first one waits for sandboxd to resolve the key placeholder on the host;
+    # with the 2s default the SessionStart heartbeat and memory sync skipped.
+    BRIDGE_CHECK_TIMEOUT: "8"
 
 setup:
   install:
@@ -111,7 +115,7 @@ setup:
         KIT_REPO="dirien/agent-memory"
         # Immutable ref to install. scripts/push-kit.sh rewrites it to the exact
         # commit SHA when publishing the kit to GHCR.
-        KIT_REF="v0.2.0"
+        KIT_REF="v0.2.1"
         DIR="$HOME/.local/share/agent-memory"
         if [ ! -x "$DIR/bridge" ]; then
           mkdir -p "$DIR"
@@ -119,6 +123,10 @@ setup:
             "https://codeload.github.com/$KIT_REPO/tar.gz/$KIT_REF" \
             | tar -xz --strip-components=1 -C "$DIR"
         fi
+        # Install the hooks now, so the first Claude session already has them.
+        # setup.startup runs it again on every start (Docker reseeds ~/.claude),
+        # but startup doesn't gate the agent, so it can lose that race.
+        bash "$DIR/scripts/sbx-startup.sh" || true
   files:
     # Records the workspace path and which agent-memory copy to use, for the
     # startup step below.

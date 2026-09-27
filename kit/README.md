@@ -35,7 +35,7 @@ sbx create --name my-agent --skills=off \
   --env BRIDGE_AGENT_ID="$(v agentId)" \
   --env ELASTIC_KIBANA_HOST="$(v kibanaHost)" \
   --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 \
-  --kit ghcr.io/dirien/agent-memory-kit:v0.2.0 \
+  --kit ghcr.io/dirien/agent-memory-kit:v0.2.1 \
   claude /path/to/any/project
 sbx run --name my-agent
 ```
@@ -64,8 +64,8 @@ Inside the sandbox:
 |---|---|
 | `permissions.network.allow` | `api.elastic-cloud.com`, your project's `*.es.<region>.elastic.cloud` and `*.kb.<region>.elastic.cloud`, `codeload.github.com` (the agent-memory tarball), the Pulumi service, the OpenTofu registry and GitHub (providers), Ubuntu mirrors, npm |
 | `credentials` | service `elastic-cloud`: `EC_API_KEY` for `pulumi up` in an agent-memory workspace; the proxy injects `Authorization: ApiKey <key>` on `api.elastic-cloud.com` |
-| `environment.variables` | `AGENT_MEMORY_BACKEND` (from the `backend` arg), `BRIDGE_TIMEOUT=10` |
-| `setup.install` | installs `jq`, `curl`, `openssl` if missing; downloads agent-memory at `KIT_REF` into `~/.local/share/agent-memory` |
+| `environment.variables` | `AGENT_MEMORY_BACKEND` (from the `backend` arg), `BRIDGE_TIMEOUT=10`, `BRIDGE_CHECK_TIMEOUT=8` (bridge's online probe; the 2s default is too tight behind the proxy) |
+| `setup.install` | installs `jq`, `curl`, `openssl` if missing; downloads agent-memory at `KIT_REF` into `~/.local/share/agent-memory` and runs its startup script once, so the hooks exist before the first session |
 | `setup.files` | records the workspace path and the `agent_memory_dir` choice |
 | `setup.startup` | runs `scripts/sbx-startup.sh` from that copy on every start: links `bridge` into `~/.local/bin` and runs `apm install -g --target claude`, so the hooks, the `agent-memory` skill and the `elastic-memory` MCP server land in this sandbox's `~/.claude` only |
 | `agentInstructions` | tells Claude to recall before re-deriving, and that the keys are placeholders |
@@ -121,5 +121,5 @@ Locally, with `sbx` on the host:
 
 ```bash
 sbx kit validate ./kit
-TAG=v0.2.0 scripts/push-kit.sh
+TAG=v0.2.1 scripts/push-kit.sh
 ```

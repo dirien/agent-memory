@@ -68,7 +68,7 @@ sbx create --name my-agent --skills=off \
   --env BRIDGE_ES_URL="$(v esUrl)" --env BRIDGE_AGENT_ID="$(v agentId)" \
   --env ELASTIC_KIBANA_HOST="$(v kibanaHost)" \
   --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 \
-  --kit ghcr.io/dirien/agent-memory-kit:v0.2.0 \
+  --kit ghcr.io/dirien/agent-memory-kit:v0.2.1 \
   claude /path/to/any/project
 sbx run --name my-agent
 ```
@@ -153,6 +153,7 @@ Copy `.env.example` to `.env` (or let `install.sh` create it).
 | `BRIDGE_WATCH_DIRS` | no | `$PWD` | Space-separated directories to index as entities |
 | `BRIDGE_MEMORY_PATH` | no | `~/.claude/projects/<cwd>/memory` | Path to Claude Code auto-memory directory |
 | `BRIDGE_TIMEOUT` | no | `5` | Elasticsearch request timeout in seconds |
+| `BRIDGE_CHECK_TIMEOUT` | no | `2` | Timeout of the online probe; when it trips, writes queue offline and the SessionStart heartbeat is skipped |
 | `BRIDGE_ENTITY_INDEX` | no | `{agent}-entities` | Entity index name; set by `install.sh` |
 | `BRIDGE_ENTITY_HISTORY_INDEX` | no | `{agent}-entity-history` | Entity history index name; set by `install.sh` |
 | `BRIDGE_ENTITY_ROOT` | no | — | Base directory for `BRIDGE_ENTITY_TYPE_MAP` paths; required for `bridge graph reconcile` |
