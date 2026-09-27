@@ -74,6 +74,20 @@ mem_remember() {
   fi
 }
 
+# ES|QL's DECAY takes a time_duration (milliseconds up to hours); a date
+# period like "45d" is rejected. Turn 45d / 12h / 90m into "1080 hours" etc.
+# Anything else is passed through as an ES|QL literal.
+_esql_decay_duration() {
+  local window="$1" num="${1%?}"
+  [[ "$num" =~ ^[0-9]+$ ]] || { echo "$window"; return; }
+  case "$window" in
+    *d) echo "$(( num * 24 )) hours" ;;
+    *h) echo "$num hours" ;;
+    *m) echo "$num minutes" ;;
+    *)  echo "$window" ;;
+  esac
+}
+
 # Search memories
 # Usage: mem_recall <query> [--type X] [--category X] [--limit 5] [--semantic|--keyword|--hybrid]
 mem_recall() {
@@ -178,7 +192,7 @@ FROM ${IDX_MEMORY} METADATA _id, _score, _index
     | SORT _score DESC | LIMIT 50
 )
 | FUSE
-| EVAL final_score = _score * DECAY(created_at, NOW(), "${BRIDGE_MEMORY_DECAY_WINDOW}")
+| EVAL final_score = _score * DECAY(created_at, NOW(), $(_esql_decay_duration "$BRIDGE_MEMORY_DECAY_WINDOW"))
 | EVAL display = COALESCE(title, SUBSTRING(content, 1, 80))
 | SORT final_score DESC | LIMIT ${limit}
 | KEEP memory_id, type, display, access_scope, agent
