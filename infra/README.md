@@ -9,6 +9,7 @@ on Elastic Cloud Serverless:
 | `elasticstack_elasticsearch_index` ×7 | `elastic/elasticstack` | `agent-memory`, `agent-messages`, `agent-sessions`, `agent-tasks`, `agent-status`, `<agent>-entities`, `<agent>-entity-history`; `semantic_text` fields use Jina v5 on the Elastic Inference Service |
 | `elasticstack_elasticsearch_security_api_key` | `elastic/elasticstack` | a key scoped to those indices, for the `bridge` CLI |
 | `elasticstack_kibana_dashboard` | `elastic/elasticstack` | the Agent Memory overview, built from `setup/dashboards/agent-memory-overview.json` |
+| `pulumiservice_environment` | `pulumi/pulumiservice` | the `<org>/agent-memory/runtime` ESC environment: settings and both keys for agents, instead of `.env` files |
 | `elasticstack_elasticsearch_security_api_key` (`mcp`) | `elastic/elasticstack` | a read-only key for Kibana's Agent Builder MCP server (`feature_agentBuilder.read` + `read` on the memory indices) |
 
 Both providers are Terraform providers. Pulumi HCL pulls them from the OpenTofu
@@ -46,9 +47,9 @@ cd infra
 pulumi stack init <org>/dev            # Pulumi.dev.yaml imports agent-memory/elastic-cloud
 pulumi config set agent_id claude      # optional: BRIDGE_AGENT_ID, prefixes the entity indices
 pulumi config set region aws-us-east-1 # optional
+pulumi config set esc_organization <org>
 pulumi up
-../scripts/write-env.sh                # writes ../.env from the stack outputs
-../bridge status
+pulumi env run <org>/agent-memory/runtime -- ../bridge status
 ```
 
 With a local state backend (the default inside the Docker Sandboxes kit):
@@ -56,9 +57,9 @@ With a local state backend (the default inside the Docker Sandboxes kit):
 ```bash
 export AGENT_MEMORY_BACKEND=local      # the kit sets this for you
 scripts/pulumi.sh preview              # from the repo root
+scripts/pulumi.sh config set esc_organization <org>
 scripts/pulumi.sh up
-scripts/write-env.sh
-bridge status
+pulumi env run <org>/agent-memory/runtime -- ./bridge status
 ```
 
 `scripts/pulumi.sh` keeps state in `infra/.pulumi-state` (stack `local`,
@@ -77,8 +78,8 @@ field can take a few seconds while the inference endpoint warms up.
 | `elasticsearch_url`, `kibana_url` | project endpoints |
 | `dashboard_url` | the Agent Memory overview in Kibana |
 | `bridge_api_key` (secret) | the scoped key |
-| `dotenv` (secret) | a ready `.env`; `scripts/write-env.sh` merges it into `../.env` |
-| `mcp_url`, `mcp_api_key` (secret) | Agent Builder MCP endpoint and its read-only key; `scripts/write-env.sh` writes the host and key to `../.mcp.env` for the `elastic-memory` server in `.mcp.json` |
+| `esc_environment` | the runtime ESC environment (`<org>/agent-memory/runtime`) |
+| `mcp_url`, `mcp_api_key` (secret) | Agent Builder MCP endpoint and its read-only key (also in the runtime environment) |
 
 ## Config
 
@@ -87,6 +88,8 @@ field can take a few seconds while the inference endpoint warms up.
 | `project_name` | `agent-memory` | Serverless project name |
 | `region` | `aws-us-east-1` | Elastic Cloud region (`GET https://api.elastic-cloud.com/api/v1/serverless/regions`) |
 | `agent_id` | `claude` | `BRIDGE_AGENT_ID`; lowercase, becomes an index prefix |
+| `esc_organization` | (required) | Pulumi Cloud org that owns the runtime ESC environment |
+| `esc_project`, `esc_environment` | `agent-memory`, `runtime` | its project and name |
 | `embedding_inference_id` | `.jina-embeddings-v5-text-small` | inference endpoint behind the `semantic_text` fields |
 
 ## Tear down

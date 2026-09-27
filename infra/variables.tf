@@ -21,6 +21,23 @@ variable "agent_id" {
   }
 }
 
+variable "esc_organization" {
+  description = "Pulumi Cloud organization that owns the runtime ESC environment (agent-memory/runtime)"
+  type        = string
+}
+
+variable "esc_project" {
+  description = "ESC project for the runtime environment"
+  type        = string
+  default     = "agent-memory"
+}
+
+variable "esc_environment" {
+  description = "ESC environment name for what agents need at runtime"
+  type        = string
+  default     = "runtime"
+}
+
 variable "embedding_inference_id" {
   description = "Inference endpoint behind the semantic_text fields. Serverless ships Jina v5 on the Elastic Inference Service."
   type        = string

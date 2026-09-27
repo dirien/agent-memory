@@ -10,6 +10,11 @@ terraform {
       source  = "elastic/elasticstack"
       version = "0.16.0"
     }
+    # Native Pulumi package: writes the ESC environment the agents read.
+    pulumiservice = {
+      source  = "pulumi/pulumiservice"
+      version = "1.4.0"
+    }
   }
 }
 

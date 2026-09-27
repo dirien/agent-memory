@@ -5,3 +5,4 @@ environment:
 config:
   agent-memory-infra:agent_id: claude
   agent-memory-infra:region: aws-us-east-1
+  agent-memory-infra:esc_organization: dirien
