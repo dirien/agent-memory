@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # es.sh — curl wrapper for Elasticsearch API
 
-# Check if ES is reachable (2s timeout)
+# Check if ES is reachable. BRIDGE_CHECK_TIMEOUT (default 2s) bounds the probe;
+# raise it behind slow proxies, where a timeout makes every write look offline.
 es_check() {
   curl -s -o /dev/null -w "%{http_code}" \
-    --max-time 2 \
+    --max-time "${BRIDGE_CHECK_TIMEOUT:-2}" \
     -H "Authorization: ApiKey $BRIDGE_ES_API_KEY" \
     "$BRIDGE_ES_URL" 2>/dev/null
 }
@@ -16,14 +17,14 @@ es_online() {
   [[ "$code" == "200" ]]
 }
 
-# Check if Kibana is reachable (2s timeout)
+# Check if Kibana is reachable (BRIDGE_CHECK_TIMEOUT, default 2s)
 kibana_online() {
   if [[ -z "${KIBANA_URL:-}" ]]; then
     return 1
   fi
   local code
   code="$(curl -s -o /dev/null -w "%{http_code}" \
-    --max-time 2 \
+    --max-time "${BRIDGE_CHECK_TIMEOUT:-2}" \
     -H "Authorization: ApiKey $BRIDGE_ES_API_KEY" \
     "${KIBANA_URL}/api/status" 2>/dev/null)"
   [[ "$code" == "200" ]]
