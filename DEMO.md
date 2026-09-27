@@ -69,7 +69,7 @@ sbx secret set-custom --host '*.kb.us-east-1.aws.elastic.cloud' --env ELASTIC_MC
 # Settings aren't secret; pass them at creation.
 v() { pulumi env get "$E" "elastic.$1" --value string; }
 MEM_ENV=(--env BRIDGE_ES_URL="$(v esUrl)" --env BRIDGE_AGENT_ID="$(v agentId)" --env ELASTIC_KIBANA_HOST="$(v kibanaHost)")
-KITS=(--kit ghcr.io/dirien/infrastructure-kit:v0.10.5 --kit ghcr.io/dirien/agent-memory-kit:v0.2.1)
+KITS=(--kit ghcr.io/dirien/infrastructure-kit:v0.10.5 --kit ghcr.io/dirien/agent-memory-kit:v0.2.2)
 
 mkdir -p /tmp/nyc-demo           # any project; the kit brings agent-memory itself
 ```

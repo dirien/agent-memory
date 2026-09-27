@@ -12,7 +12,7 @@
 #   .apm/skills/agent-memory/SKILL.md → when to recall, remember, and hand off
 
 name: agent-memory
-version: 0.2.1
+version: 0.2.2
 description: Elasticsearch as persistent semantic memory for Claude Code agents — hooks and a recall/remember skill for the bridge CLI.
 author: Jeff Vestal (fork maintained by Engin Diri)
 license: Apache-2.0

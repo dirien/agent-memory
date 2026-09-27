@@ -9,7 +9,7 @@ description: >-
   allows egress to Elastic Cloud and your project's endpoints. Settings come in
   with `sbx create --env`, keys as proxy placeholders; no .env files. Stack it
   after the infrastructure kit, which brings APM (and Pulumi).
-version: "0.2.1"
+version: "0.2.2"
 sourceURL: https://github.com/dirien/agent-memory
 licenses:
   - Apache-2.0
@@ -115,7 +115,7 @@ setup:
         KIT_REPO="dirien/agent-memory"
         # Immutable ref to install. scripts/push-kit.sh rewrites it to the exact
         # commit SHA when publishing the kit to GHCR.
-        KIT_REF="v0.2.1"
+        KIT_REF="v0.2.2"
         DIR="$HOME/.local/share/agent-memory"
         if [ ! -x "$DIR/bridge" ]; then
           mkdir -p "$DIR"

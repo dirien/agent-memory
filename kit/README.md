@@ -35,7 +35,7 @@ sbx create --name my-agent --skills=off \
   --env BRIDGE_AGENT_ID="$(v agentId)" \
   --env ELASTIC_KIBANA_HOST="$(v kibanaHost)" \
   --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 \
-  --kit ghcr.io/dirien/agent-memory-kit:v0.2.1 \
+  --kit ghcr.io/dirien/agent-memory-kit:v0.2.2 \
   claude /path/to/any/project
 sbx run --name my-agent
 ```
@@ -121,5 +121,5 @@ Locally, with `sbx` on the host:
 
 ```bash
 sbx kit validate ./kit
-TAG=v0.2.1 scripts/push-kit.sh
+TAG=v0.2.2 scripts/push-kit.sh
 ```

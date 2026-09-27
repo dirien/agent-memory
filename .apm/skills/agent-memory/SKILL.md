@@ -18,7 +18,7 @@ the user again.
 | Only one kind of memory | `bridge recall "<query>" --type decision` |
 | Content of indexed project docs | `bridge graph search "<query>"` |
 | What happened recently | `bridge history --last 7d` |
-| Unfinished work from a previous session | `bridge task list --status suspended` |
+| Unfinished work from a previous session | `bridge task open` (the session start already lists it) |
 
 `bridge recall` is hybrid (BM25 + Jina v5 semantic, fused with ES|QL
 FORK/FUSE) and decays older memories, so phrase the query the way you would ask
@@ -49,7 +49,7 @@ bridge task done <task_id> --outcome "dashboard deployed via Pulumi"
 ```
 
 A session that ends mid-task suspends it automatically (SessionEnd hook), so the
-next session finds it with `bridge task list --status suspended`.
+next session sees it in its opening context and with `bridge task open`.
 
 ## What the hooks already do
 
