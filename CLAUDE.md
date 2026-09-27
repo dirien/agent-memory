@@ -126,10 +126,10 @@ fallback/                 — offline queue; synced files go to .synced/
 
 ## Infrastructure, APM and the sandbox kit
 
-- `infra/` is a Pulumi HCL program (`runtime: hcl`) for the Serverless project, indices, scoped API key and dashboard. Run it through `scripts/pulumi.sh` (`preview` before `up`); inside Docker Sandboxes `AGENT_MEMORY_BACKEND=local` keeps state in `infra/.pulumi-state`. `scripts/write-env.sh` turns the stack outputs into `.env`. `elastic/elasticstack` stays pinned to 0.16.0 (see `infra/README.md`).
+- `infra/` is a Pulumi HCL program (`runtime: hcl`) for the Serverless project, indices, scoped API key and dashboard. Run it through `scripts/pulumi.sh` (`preview` before `up`); inside Docker Sandboxes `AGENT_MEMORY_BACKEND=local` keeps state in `infra/.pulumi-state`. The stack also writes the `<org>/agent-memory/runtime` ESC environment with every setting and key agents need; there are no `.env` files in this flow (`pulumi env run <org>/agent-memory/runtime -- ...`). `elastic/elasticstack` stays pinned to 0.16.0 (see `infra/README.md`).
 - Hooks and the `agent-memory` skill are APM primitives under `.apm/`, installed only at user scope (`apm install -g`), in the demo sandboxes by the kit. Don't run a project-level `apm install` here and don't commit `.claude/settings.json`, `.claude/hooks/` or `.mcp.json`: the workspace is shared with the sandbox the demo is built in, which must stay free of these hooks.
-- The `elastic-memory` MCP server (Kibana Agent Builder) is declared in `apm.yml`. Run `env -u ELASTIC_MCP_API_KEY -u ELASTIC_KIBANA_HOST apm install -g ...`: when those variables are set (from `.mcp.env` or the sandbox), APM writes their values into `~/.claude.json` instead of keeping the placeholders.
-- `kit/spec.yaml` is a Docker Sandboxes mixin kit; `scripts/sbx-startup.sh` is its startup step. Validate on the host with `sbx kit validate ./kit`.
+- The `elastic-memory` MCP server (Kibana Agent Builder) is declared in `apm.yml`. Run `env -u ELASTIC_MCP_API_KEY -u ELASTIC_KIBANA_HOST apm install -g ...`: when those variables are set (from `pulumi env run` or the sandbox), APM writes their values into `~/.claude.json` instead of keeping the placeholders.
+- `kit/spec.yaml` is a Docker Sandboxes mixin kit, published as `ghcr.io/dirien/agent-memory-kit` by `.github/workflows/publish-kit.yaml` (validate + push on `main` and `v*` tags). It downloads this repo at `KIT_REF`, and `scripts/sbx-startup.sh` from that copy links `bridge` and runs `apm install -g`.
 - `bridge` must stay portable across macOS (BSD userland, bash from Homebrew) and Linux (GNU): no `sed -i`, no `md5`-only calls.
 
 ## CLAUDE.md Template

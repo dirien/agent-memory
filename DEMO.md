@@ -52,29 +52,29 @@ project directory either way.
 ## 0. Before you start (host)
 
 ```bash
-cd ~/workshops/give-your-coding-agent-an-elastic-memory   # this repo on the host
-
 sbx version                      # kit schema v2 needs sbx >= 0.38.0
-sbx kit validate ./kit
 sbx settings set kit.allowedSources '["docker.io/","ghcr.io/dirien/","github.com/dirien/"]'
-sbx secret ls                    # the global `pulumi` secret must exist (ESC reads)
+sbx secret ls                    # the global `pulumi` secret must exist
 
-# The MCP key lives in ESC (mcp.apiKey); sbx resolves it on the host when needed,
-# the sandbox only sees a placeholder. sbx wants an absolute path for --command.
-E=dirien/agent-memory/elastic-cloud
-PULUMI_BIN="$(command -v pulumi)"
+E=dirien/agent-memory/runtime    # written by the Pulumi program (infra/esc.tf)
+PULUMI_BIN="$(command -v pulumi)" # sbx wants an absolute path for --command
+
+# Keys stay on the host: the sandbox gets placeholders, sandboxd resolves the real
+# values from ESC when a request to the matching host needs them.
+sbx secret set-custom --host '*.es.us-east-1.aws.elastic.cloud' --env BRIDGE_ES_API_KEY \
+  --command "$PULUMI_BIN env get $E elastic.bridgeApiKey --value string --show-secrets | tr -d '\n'"
 sbx secret set-custom --host '*.kb.us-east-1.aws.elastic.cloud' --env ELASTIC_MCP_API_KEY \
-  --command "$PULUMI_BIN env get $E mcp.apiKey --value string --show-secrets | tr -d '\n'"
-ELASTIC_KIBANA_HOST="$(pulumi env get $E mcp.kibanaHost --value string)"
+  --command "$PULUMI_BIN env get $E elastic.mcpApiKey --value string --show-secrets | tr -d '\n'"
+
+# Settings aren't secret; pass them at creation.
+v() { pulumi env get "$E" "elastic.$1" --value string; }
+MEM_ENV=(--env BRIDGE_ES_URL="$(v esUrl)" --env BRIDGE_AGENT_ID="$(v agentId)" --env ELASTIC_KIBANA_HOST="$(v kibanaHost)")
+KITS=(--kit ghcr.io/dirien/infrastructure-kit:v0.10.5 --kit ghcr.io/dirien/agent-memory-kit:v0.2.0)
+
+mkdir -p /tmp/nyc-demo           # any project; the kit brings agent-memory itself
 ```
 
-If `sbx` rejects the `--command` check, store the value instead:
-`--value "$(pulumi env get $E mcp.apiKey --value string --show-secrets)"`.
-To put the key into ESC in the first place (after `pulumi up`):
-`scripts/pulumi.sh stack output mcp_api_key --show-secrets | tr -d '\n' | pulumi env set $E mcp.apiKey --secret -f -`.
-
-`.env` and `.mcp.env` already exist in the workspace (written by
-`scripts/write-env.sh`), and the Elasticsearch indices start empty.
+The Elasticsearch indices start empty. There are no `.env` files anywhere.
 
 Exit every Claude session with `/exit`: that runs the SessionEnd hook. Detaching
 (`Ctrl-\`) leaves the session running and does not.
@@ -82,21 +82,18 @@ Exit every Claude session with `/exit`: that runs the SessionEnd hook. Detaching
 ## Act 1: Friday, sandbox `mem-a`
 
 ```bash
-sbx create --name mem-a --skills=off \
-  --env ELASTIC_KIBANA_HOST="$ELASTIC_KIBANA_HOST" \
-  --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 --kit ./kit \
-  claude .
+sbx create --name mem-a --skills=off "${MEM_ENV[@]}" "${KITS[@]}" claude /tmp/nyc-demo
 sbx run --name mem-a
 ```
 
-`--name` matters: without it the sandbox is named `claude-<folder>`, the same as
-the sandbox this repo was built in, and `sbx run` would re-attach to that one.
+Keep `create` and `run` separate: the kit's startup step installs the hooks,
+skill and MCP server while the sandbox starts, before Claude does.
 
 Smoke checks in the new session (prefix with `!` to run them in the shell):
 
 ```text
 ! bridge status                  # ES connectivity: online, 7 indices
-! echo "$ELASTIC_MCP_API_KEY"     # a placeholder, not the key
+! echo "$BRIDGE_ES_API_KEY"       # sbx-cs-… placeholder, not the key
 /mcp                             # elastic-memory connected (user scope, no approval prompt)
 ```
 
@@ -126,14 +123,11 @@ FROM agent-sessions | KEEP timestamp, action, summary, machine | SORT timestamp
 
 ## Act 2: Monday, sandbox `mem-b`
 
-Same command, new name. The workspace is the same; the home directory, and with
-it `~/.claude/projects/.../memory/`, is not.
+Same command, new name. The project folder is the same; the home directory, and
+with it Claude's local auto-memory, is not.
 
 ```bash
-sbx create --name mem-b --skills=off \
-  --env ELASTIC_KIBANA_HOST="$ELASTIC_KIBANA_HOST" \
-  --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 --kit ./kit \
-  claude .
+sbx create --name mem-b --skills=off "${MEM_ENV[@]}" "${KITS[@]}" claude /tmp/nyc-demo
 sbx run --name mem-b
 ```
 
@@ -166,14 +160,14 @@ sbx rm mem-a mem-b
 sbx secret ls                           # remove the custom secret if you like
 ```
 
-Wipe the indices before the talk (from any shell with `.env` loaded):
+Wipe the indices before the talk (from the agent-memory clone, keys from ESC):
 
 ```bash
-set -a; . ./.env; set +a
-for idx in agent-memory agent-messages agent-sessions agent-tasks agent-status claude-entities claude-entity-history; do
-  curl -s -X POST -H "Authorization: ApiKey $BRIDGE_ES_API_KEY" -H 'Content-Type: application/json' \
-    "$BRIDGE_ES_URL/$idx/_delete_by_query?refresh=true" -d '{"query":{"match_all":{}}}'
-done
+pulumi env run dirien/agent-memory/runtime -- bash -c '
+  for idx in agent-memory agent-messages agent-sessions agent-tasks agent-status claude-entities claude-entity-history; do
+    curl -s -X POST -H "Authorization: ApiKey $BRIDGE_ES_API_KEY" -H "Content-Type: application/json" \
+      "$BRIDGE_ES_URL/$idx/_delete_by_query?refresh=true" -d "{\"query\":{\"match_all\":{}}}"
+  done'
 ```
 
 ## Things we saw while rehearsing

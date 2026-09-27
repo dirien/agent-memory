@@ -30,9 +30,9 @@ dependencies:
   mcp:
     # Agent Builder's MCP server in the project's Kibana: search, ES|QL and
     # index listing over the memory indices, with a read-only key from infra/.
-    # Claude Code expands the placeholders from its process environment: load
-    # the gitignored .mcp.env (scripts/write-env.sh) before starting claude, or
-    # let Docker Sandboxes provide them (see kit/README.md).
+    # Claude Code expands the placeholders from its process environment:
+    # `pulumi env run <org>/agent-memory/runtime -- claude`, or in Docker
+    # Sandboxes `sbx create --env` plus a proxy placeholder (kit/README.md).
     - name: elastic-memory
       registry: false
       transport: http

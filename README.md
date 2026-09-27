@@ -22,50 +22,18 @@ Recalling a stored memory costs a single search query. The alternative is loadin
 
 This fork of [jeffvestal/agent-memory](https://github.com/jeffvestal/agent-memory) adds:
 
-- **`infra/`**: a [Pulumi HCL](https://www.pulumi.com/docs/iac/languages-sdks/hcl/) program that creates the Elasticsearch Serverless project, the seven indices, a scoped API key and the Kibana dashboard.
-- **APM packaging** (`apm.yml`, `.apm/`): the Claude Code hooks and an `agent-memory` skill ship as an [APM](https://github.com/microsoft/apm) package, so `apm install -g` wires them into the agent that should remember, instead of hand-edited `settings.json`.
-- **`kit/`**: a [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) kit that runs all of it inside a Claude Code sandbox, with the Elastic Cloud key injected by the credential proxy.
-- Fixes so `bridge` runs on Linux (the sandbox) as well as macOS, and so synced auto-memories keep their body and type.
+- **`infra/`**: a [Pulumi HCL](https://www.pulumi.com/docs/iac/languages-sdks/hcl/) program that creates the Elasticsearch Serverless project, the seven indices, two scoped API keys, the Kibana dashboard, and a Pulumi ESC environment (`<org>/agent-memory/runtime`) holding everything an agent needs at runtime. No `.env` files.
+- **APM packaging** (`apm.yml`, `.apm/`): the Claude Code hooks, an `agent-memory` skill and the `elastic-memory` MCP server ship as an [APM](https://github.com/microsoft/apm) package, so `apm install -g` wires them into the agent that should remember, instead of hand-edited `settings.json`.
+- **`kit/`**: a [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) kit, published as `ghcr.io/dirien/agent-memory-kit`, that gives a Claude Code sandbox the memory in any project, with the keys kept out of the sandbox.
+- Fixes so `bridge` runs on Linux (the sandbox) as well as macOS, so synced auto-memories keep their body and type, and so hybrid recall and the dashboard work on current Serverless.
 
 ## Quick start
 
 **Requirements:** Elasticsearch Serverless (or Elasticsearch 9.3+) · bash 4.3+ (`brew install bash` on macOS) · `jq`, `curl`, `openssl`
 
-Pick one of three setups. They end in the same place: a `.env` next to `bridge`, the hooks active in Claude Code, and `bridge status` showing online.
+### 1. Deploy the backend (once)
 
-### A. Docker Sandboxes (everything wired)
-
-On the host, bind the Pulumi token and create the ESC environment once, then start Claude Code in a sandbox with the infrastructure kit (Pulumi + APM) and this repo's kit:
-
-```bash
-sbx secret set pulumi              # Pulumi Cloud token
-
-git clone https://github.com/dirien/agent-memory && cd agent-memory
-pulumi env init <org>/agent-memory/elastic-cloud -f infra/esc/elastic-cloud.yaml
-read -rs EC_KEY && printf '%s' "$EC_KEY" | \
-  pulumi env set <org>/agent-memory/elastic-cloud elastic.apiKey --secret -f -
-openssl rand -base64 36 | tr -d '\n' | \
-  pulumi env set <org>/agent-memory/elastic-cloud state.passphrase --secret -f -
-
-sbx run \
-  --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 \
-  --kit ./kit \
-  claude .
-```
-
-Inside the sandbox, deploy the backend and write `.env`:
-
-```bash
-scripts/pulumi.sh up        # state in infra/.pulumi-state; keys from ESC
-scripts/write-env.sh
-bridge status
-```
-
-The sandbox keeps Pulumi state locally because its credential proxy breaks Pulumi Cloud updates; [`kit/README.md`](kit/README.md) explains why and how to switch to a Pulumi Cloud stack. `bridge` is already on PATH and the hooks are active.
-
-### B. Pulumi, without a sandbox
-
-Install [Pulumi](https://www.pulumi.com/docs/install/) (3.256+) and [APM](https://github.com/microsoft/apm) (`curl -sSL https://aka.ms/apm-unix | sh`), then:
+Install [Pulumi](https://www.pulumi.com/docs/install/) (3.256+), then:
 
 ```bash
 git clone https://github.com/dirien/agent-memory && cd agent-memory
@@ -75,16 +43,53 @@ pulumi env init <org>/agent-memory/elastic-cloud -f infra/esc/elastic-cloud.yaml
 read -rs EC_KEY && printf '%s' "$EC_KEY" | \
   pulumi env set <org>/agent-memory/elastic-cloud elastic.apiKey --secret -f -
 
-cd infra && pulumi stack init <org>/dev && pulumi up && cd ..
-scripts/write-env.sh                       # .env from the stack outputs
-ln -s "$PWD/bridge" ~/.local/bin/bridge    # or add this directory to PATH
-apm install -g --target claude "$PWD"     # hooks, skill + MCP into ~/.claude
-bridge status
+cd infra
+pulumi stack init <org>/dev
+pulumi config set esc_organization <org>
+pulumi up
 ```
 
-What the Elastic Cloud key needs and every stack option: [`infra/README.md`](infra/README.md).
+Besides the Elastic resources, the stack writes the `<org>/agent-memory/runtime` ESC environment: `BRIDGE_ES_URL`, `BRIDGE_AGENT_ID`, `KIBANA_URL`, `ELASTIC_KIBANA_HOST` as plain values, `BRIDGE_ES_API_KEY` and `ELASTIC_MCP_API_KEY` as secrets. What the Elastic Cloud key needs and every stack option: [`infra/README.md`](infra/README.md).
 
-### C. Manual (`install.sh`)
+### 2a. Give Claude Code the memory, in Docker Sandboxes
+
+The kit fetches agent-memory itself, so any project folder works, and the keys stay on the host as proxy placeholders:
+
+```bash
+E=<org>/agent-memory/runtime
+PULUMI_BIN="$(command -v pulumi)"
+sbx secret set-custom --host '*.es.us-east-1.aws.elastic.cloud' --env BRIDGE_ES_API_KEY \
+  --command "$PULUMI_BIN env get $E elastic.bridgeApiKey --value string --show-secrets | tr -d '\n'"
+sbx secret set-custom --host '*.kb.us-east-1.aws.elastic.cloud' --env ELASTIC_MCP_API_KEY \
+  --command "$PULUMI_BIN env get $E elastic.mcpApiKey --value string --show-secrets | tr -d '\n'"
+
+v() { pulumi env get "$E" "elastic.$1" --value string; }
+sbx create --name my-agent --skills=off \
+  --env BRIDGE_ES_URL="$(v esUrl)" --env BRIDGE_AGENT_ID="$(v agentId)" \
+  --env ELASTIC_KIBANA_HOST="$(v kibanaHost)" \
+  --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 \
+  --kit ghcr.io/dirien/agent-memory-kit:v0.2.0 \
+  claude /path/to/any/project
+sbx run --name my-agent
+```
+
+Details, arguments and the verification checks: [`kit/README.md`](kit/README.md).
+
+### 2b. Give Claude Code the memory, without a sandbox
+
+Install [APM](https://github.com/microsoft/apm) (`curl -sSL https://aka.ms/apm-unix | sh`), then from your agent-memory clone:
+
+```bash
+ln -s "$PWD/bridge" ~/.local/bin/bridge            # or add this directory to PATH
+apm install -g --target claude "$PWD"              # hooks, skill + MCP server into ~/.claude
+
+cd /path/to/any/project
+pulumi env run <org>/agent-memory/runtime -- claude
+```
+
+`pulumi env run` puts the runtime environment into Claude Code's process, where the `bridge` CLI, the hooks and the MCP server read it. Nothing is written to disk.
+
+### Alternative: manual setup with `install.sh`
 
 If you already have an Elasticsearch project and an API key:
 
@@ -94,7 +99,7 @@ git clone https://github.com/dirien/agent-memory && cd agent-memory
 ./bridge status
 ```
 
-`install.sh` walks you through credentials interactively (or reads an existing `.env`), creates the inference endpoint, and sets up all indices. `bridge status` confirms connectivity. Add `bridge` to your `PATH` once setup completes.
+`install.sh` walks you through credentials interactively and writes them to a `.env` next to `bridge` (the one setup that uses a file), creates the inference endpoint, and sets up all indices. `bridge status` confirms connectivity. Add `bridge` to your `PATH` once setup completes.
 
 ### First memories
 
@@ -123,20 +128,13 @@ The repo itself has no project-level `.claude/` config on purpose: in Docker San
 | `PostToolUse` | Any Write / Edit / MultiEdit / NotebookEdit | Indexes changed `.md` files as searchable entities |
 | `SessionEnd` | Agent session ends | Logs a session-end event and suspends in-flight tasks |
 
-Every hook exits 0: with no `.env` they stay silent, and when Elasticsearch is unreachable writes queue in `fallback/` until `bridge sync`.
+Every hook exits 0: without `BRIDGE_*` settings they stay silent, and when Elasticsearch is unreachable writes queue in `fallback/` until `bridge sync`.
 
 ## MCP: query the memory from any agent
 
 Serverless Kibana ships an MCP server (Agent Builder) at `https://<kibana>/api/agent_builder/mcp`. The Pulumi stack creates a read-only key for it, and `apm.yml` declares it as the `elastic-memory` server with `${ELASTIC_KIBANA_HOST}` / `${ELASTIC_MCP_API_KEY}` placeholders; `apm install -g` puts it in `~/.claude.json` (user scope, so no per-project approval prompt).
 
-Claude Code expands those placeholders from its **process environment** (tested: values in `settings.json` `env` don't reach the expansion). `scripts/write-env.sh` writes them to the gitignored `.mcp.env`:
-
-```bash
-set -a; . ./.mcp.env; set +a
-claude            # /mcp shows elastic-memory connected
-```
-
-In Docker Sandboxes the proxy can hold the key instead, so the container only sees a placeholder: see [`kit/README.md`](kit/README.md#mcp-key-through-the-proxy).
+Claude Code expands those placeholders from its **process environment** (tested: values in `settings.json` `env` don't reach the expansion). `pulumi env run <org>/agent-memory/runtime -- claude` provides both; in Docker Sandboxes, `sbx create --env` provides the host and the proxy holds the key ([`kit/README.md`](kit/README.md#why-placeholders-not-kit-credentials)).
 
 Useful tools: `platform_core_search`, `platform_core_execute_esql`, `platform_core_generate_esql`, `platform_core_list_indices`, `platform_core_get_index_mapping`. The key only sees the seven memory indices.
 
