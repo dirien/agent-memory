@@ -7,3 +7,12 @@
 
 # Sync state (per-machine hash tracking)
 .sync-state/
+
+# Offline write queue (holds memory content until `bridge sync`)
+fallback/
+
+# APM dependencies
+apm_modules/
+
+# Slidev
+node_modules/

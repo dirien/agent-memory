@@ -1,0 +1,41 @@
+{
+  "SessionStart": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/agent-memory/hooks/session-start.sh\"",
+          "timeout": 30
+        }
+      ],
+      "_apm_source": "_local/agent-memory"
+    }
+  ],
+  "PostToolUse": [
+    {
+      "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/agent-memory/hooks/index-file.sh\"",
+          "timeout": 30
+        }
+      ],
+      "_apm_source": "_local/agent-memory"
+    }
+  ],
+  "SessionEnd": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/agent-memory/hooks/session-end.sh\"",
+          "timeout": 15
+        }
+      ],
+      "_apm_source": "_local/agent-memory"
+    }
+  ]
+}

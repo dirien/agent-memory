@@ -1,0 +1,81 @@
+lockfile_version: '1'
+dependencies: []
+deployments:
+- kind: project-relative
+  target: claude
+  value: .claude/hooks/agent-memory/hooks/index-file.sh
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:3af2854393105a9eb6823c44ddf68b743a3fdaca8c03cf18fdaa35b9f2b71345
+- kind: project-relative
+  target: claude
+  value: .claude/hooks/agent-memory/hooks/resolve-bridge.sh
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:c045a21ffcb9802686bf0e7c091b2f325fb50409261fa6d2cd8498eb09dd24df
+- kind: project-relative
+  target: claude
+  value: .claude/hooks/agent-memory/hooks/session-end.sh
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:d6b35b02544625b811394f6f18970d5386d8f1ab5ea70eeb9adff6cdc26ccd91
+- kind: project-relative
+  target: claude
+  value: .claude/hooks/agent-memory/hooks/session-start.sh
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:0000bcbb72f676a38bcba20c51887d1398965306a1d6ef1cd728f91b2a0d9f33
+- kind: project-relative
+  target: claude
+  value: .claude/hooks/agent-memory/hooks/settings.json.template
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:a119642b2c74bf5ef6f73ead9fcdf2cf3a9ca88cb36c6f9331146004da3933e5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/agent-memory
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/agent-memory/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: sha256:ea1d8053055048cd46e505fb92d3a0f2bf58aa8a35accc1fc3e8d2608a01c5ff
+local_deployed_files:
+- .claude/hooks/agent-memory/hooks/index-file.sh
+- .claude/hooks/agent-memory/hooks/resolve-bridge.sh
+- .claude/hooks/agent-memory/hooks/session-end.sh
+- .claude/hooks/agent-memory/hooks/session-start.sh
+- .claude/hooks/agent-memory/hooks/settings.json.template
+- .claude/skills/agent-memory
+- .claude/skills/agent-memory/SKILL.md
+local_deployed_file_hashes:
+  .claude/hooks/agent-memory/hooks/index-file.sh: sha256:3af2854393105a9eb6823c44ddf68b743a3fdaca8c03cf18fdaa35b9f2b71345
+  .claude/hooks/agent-memory/hooks/resolve-bridge.sh: sha256:c045a21ffcb9802686bf0e7c091b2f325fb50409261fa6d2cd8498eb09dd24df
+  .claude/hooks/agent-memory/hooks/session-end.sh: sha256:d6b35b02544625b811394f6f18970d5386d8f1ab5ea70eeb9adff6cdc26ccd91
+  .claude/hooks/agent-memory/hooks/session-start.sh: sha256:0000bcbb72f676a38bcba20c51887d1398965306a1d6ef1cd728f91b2a0d9f33
+  .claude/hooks/agent-memory/hooks/settings.json.template: sha256:a119642b2c74bf5ef6f73ead9fcdf2cf3a9ca88cb36c6f9331146004da3933e5
+  .claude/skills/agent-memory/SKILL.md: sha256:ea1d8053055048cd46e505fb92d3a0f2bf58aa8a35accc1fc3e8d2608a01c5ff
