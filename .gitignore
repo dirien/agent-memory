@@ -16,3 +16,7 @@ apm_modules/
 
 # Slidev
 node_modules/
+
+# Claude Code per-machine files
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
