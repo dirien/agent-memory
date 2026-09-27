@@ -26,10 +26,11 @@ registry and bridges them on the fly; `pulumi install` records that in
 4. A place for that key. `ec` reads `EC_API_KEY`:
 
    ```bash
-   # Pulumi ESC (works everywhere; the stack imports this environment)
-   pulumi env init <org>/agent-memory/elastic-cloud
+   # Pulumi ESC (works everywhere; the stack imports this environment).
+   # esc/elastic-cloud.yaml exports EC_API_KEY from a placeholder you replace:
+   pulumi env init <org>/agent-memory/elastic-cloud -f esc/elastic-cloud.yaml
    read -rs EC_KEY && printf '%s' "$EC_KEY" | \
-     pulumi env set <org>/agent-memory/elastic-cloud environmentVariables.EC_API_KEY --secret -f -
+     pulumi env set <org>/agent-memory/elastic-cloud elastic.apiKey --secret -f -
 
    # or, inside a Docker Sandbox, bind it on the host (see ../kit/README.md)
    sbx secret set -g elastic-cloud

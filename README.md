@@ -67,9 +67,9 @@ Install [Pulumi](https://www.pulumi.com/docs/install/) (3.256+) and [APM](https:
 git clone https://github.com/dirien/agent-memory && cd agent-memory
 
 # Elastic Cloud API key → Pulumi ESC (the stack imports this environment)
-pulumi env init <org>/agent-memory/elastic-cloud
+pulumi env init <org>/agent-memory/elastic-cloud -f infra/esc/elastic-cloud.yaml
 read -rs EC_KEY && printf '%s' "$EC_KEY" | \
-  pulumi env set <org>/agent-memory/elastic-cloud environmentVariables.EC_API_KEY --secret -f -
+  pulumi env set <org>/agent-memory/elastic-cloud elastic.apiKey --secret -f -
 
 cd infra && pulumi stack init <org>/dev && pulumi up && cd ..
 scripts/write-env.sh                       # .env from the stack outputs

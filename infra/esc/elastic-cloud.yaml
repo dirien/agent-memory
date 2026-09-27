@@ -1,0 +1,14 @@
+# Pulumi ESC environment for the agent-memory stack (infra/Pulumi.dev.yaml imports it).
+#
+# Create it once, then replace the placeholder with your Elastic Cloud API key
+# (https://cloud.elastic.co/account/keys) without it touching shell history:
+#
+#   pulumi env init <org>/agent-memory/elastic-cloud -f infra/esc/elastic-cloud.yaml
+#   read -rs EC_KEY && printf '%s' "$EC_KEY" | \
+#     pulumi env set <org>/agent-memory/elastic-cloud elastic.apiKey --secret -f -
+values:
+  elastic:
+    apiKey: REPLACE_WITH_ELASTIC_CLOUD_API_KEY
+  # The ec provider reads EC_API_KEY; ESC exports it to `pulumi up`.
+  environmentVariables:
+    EC_API_KEY: ${elastic.apiKey}
