@@ -124,6 +124,8 @@ Without APM, copy `hooks/settings.json.template` into your project's `.claude/se
 
 Every hook exits 0: with no `.env` they stay silent, and when Elasticsearch is unreachable writes queue in `fallback/` until `bridge sync`.
 
+To switch the hooks off on one machine or sandbox without touching the shared `.claude/settings.json`, set `AGENT_MEMORY_HOOKS=off` in that machine's `~/.claude/settings.json` (`"env": {"AGENT_MEMORY_HOOKS": "off"}`) or its shell environment.
+
 ## MCP: query the memory from any agent
 
 Serverless Kibana ships an MCP server (Agent Builder) at `https://<kibana>/api/agent_builder/mcp`. The Pulumi stack creates a read-only key for it, and `apm.yml` declares it as the `elastic-memory` server in `.mcp.json` with `${ELASTIC_KIBANA_HOST}` / `${ELASTIC_MCP_API_KEY}` placeholders.
