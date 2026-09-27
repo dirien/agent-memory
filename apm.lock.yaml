@@ -64,6 +64,28 @@ deployments:
   - .
   active_owner: .
   content_hash: sha256:ea1d8053055048cd46e505fb92d3a0f2bf58aa8a35accc1fc3e8d2608a01c5ff
+- kind: uri
+  target: mcp
+  value: elastic-memory
+  runtime: claude
+  scope: project
+  owners:
+  - .
+  active_owner: .
+  content_hash: null
+mcp_servers:
+- elastic-memory
+mcp_configs:
+  elastic-memory:
+    name: elastic-memory
+    transport: http
+    registry: false
+    headers:
+      Authorization: ApiKey ${ELASTIC_MCP_API_KEY}
+    url: https://${ELASTIC_KIBANA_HOST}/api/agent_builder/mcp
+mcp_target_servers:
+  claude:
+  - elastic-memory
 local_deployed_files:
 - .claude/hooks/agent-memory/hooks/index-file.sh
 - .claude/hooks/agent-memory/hooks/resolve-bridge.sh

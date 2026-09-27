@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "elastic-memory": {
+      "type": "http",
+      "url": "https://${ELASTIC_KIBANA_HOST}/api/agent_builder/mcp",
+      "headers": {
+        "Authorization": "ApiKey ${ELASTIC_MCP_API_KEY}"
+      }
+    }
+  }
+}

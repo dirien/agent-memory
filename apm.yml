@@ -23,4 +23,17 @@ keywords:
 # The hooks use Claude Code events (SessionEnd, PostToolUse on Write/Edit).
 target: claude
 
+dependencies:
+  mcp:
+    # Agent Builder's MCP server in the project's Kibana: search, ES|QL and
+    # index listing over the memory indices, with a read-only key from infra/.
+    # The placeholders are expanded by Claude Code at runtime; the values live
+    # in the gitignored .claude/settings.local.json (scripts/write-env.sh).
+    - name: elastic-memory
+      registry: false
+      transport: http
+      url: "https://${ELASTIC_KIBANA_HOST}/api/agent_builder/mcp"
+      headers:
+        Authorization: "ApiKey ${ELASTIC_MCP_API_KEY}"
+
 includes: auto

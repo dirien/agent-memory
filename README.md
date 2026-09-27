@@ -124,6 +124,14 @@ Without APM, copy `hooks/settings.json.template` into your project's `.claude/se
 
 Every hook exits 0: with no `.env` they stay silent, and when Elasticsearch is unreachable writes queue in `fallback/` until `bridge sync`.
 
+## MCP: query the memory from any agent
+
+Serverless Kibana ships an MCP server (Agent Builder) at `https://<kibana>/api/agent_builder/mcp`. The Pulumi stack creates a read-only key for it, and `apm.yml` declares it as the `elastic-memory` server in `.mcp.json` with `${ELASTIC_KIBANA_HOST}` / `${ELASTIC_MCP_API_KEY}` placeholders. `scripts/write-env.sh` puts the real values into the gitignored `.claude/settings.local.json`; restart Claude Code and approve the server once.
+
+Useful tools: `platform_core_search`, `platform_core_execute_esql`, `platform_core_generate_esql`, `platform_core_list_indices`, `platform_core_get_index_mapping`. The key only sees the seven memory indices.
+
+Keep `ELASTIC_MCP_API_KEY` out of the shell that runs `apm install`: APM resolves placeholders it can see and would write the key into `.mcp.json`.
+
 ## Configuration reference
 
 Copy `.env.example` to `.env` (or let `install.sh` create it).

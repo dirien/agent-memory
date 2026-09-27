@@ -17,7 +17,10 @@ if [[ -x "$ROOT/bridge" ]]; then
 fi
 
 if command -v apm >/dev/null 2>&1 && [[ -f "$ROOT/apm.yml" ]]; then
-  (cd "$ROOT" && apm install >/dev/null 2>&1) && log "APM hooks + skill deployed" \
+  # Unset the MCP values so APM keeps the ${...} placeholders in .mcp.json
+  # instead of writing the key into a committed file.
+  (cd "$ROOT" && env -u ELASTIC_MCP_API_KEY -u ELASTIC_KIBANA_HOST apm install >/dev/null 2>&1) \
+    && log "APM hooks, skill + MCP server deployed" \
     || log "apm install failed; hooks from the committed .claude/ still apply"
 fi
 
