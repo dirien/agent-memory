@@ -2,11 +2,12 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "",
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",
-            "command": "/REPLACE_WITH_AGENT_MEMORY_PATH/bridge sync-memories && /REPLACE_WITH_AGENT_MEMORY_PATH/bridge heartbeat"
+            "command": "bash /REPLACE_WITH_AGENT_MEMORY_PATH/hooks/session-start.sh",
+            "timeout": 30
           }
         ]
       }
@@ -17,18 +18,20 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/REPLACE_WITH_AGENT_MEMORY_PATH/hooks/index-file.sh"
+            "command": "bash /REPLACE_WITH_AGENT_MEMORY_PATH/hooks/index-file.sh",
+            "timeout": 30
           }
         ]
       }
     ],
-    "Stop": [
+    "SessionEnd": [
       {
-        "matcher": "",
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",
-            "command": "/REPLACE_WITH_AGENT_MEMORY_PATH/bridge log --action session-end --quiet"
+            "command": "bash /REPLACE_WITH_AGENT_MEMORY_PATH/hooks/session-end.sh",
+            "timeout": 15
           }
         ]
       }

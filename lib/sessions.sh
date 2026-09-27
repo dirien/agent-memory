@@ -9,16 +9,21 @@ _session_id() {
 }
 
 # Log a session action
-# Usage: session_log <action> <summary> [--tags t1,t2] [--files f1,f2]
+# Usage: session_log <action> <summary> [--tags t1,t2] [--files f1,f2] [--quiet]
 session_log() {
+  if [[ $# -lt 2 || "$1" == --* ]]; then
+    echo "Usage: bridge log <action> <summary> [--tags t1,t2] [--files f1,f2] [--quiet]" >&2
+    return 1
+  fi
   local action="$1" summary="$2"
   shift 2
 
-  local tags="[]" files="[]"
+  local tags="[]" files="[]" quiet=false
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --tags) tags="$(echo "$2" | jq -R 'split(",")' 2>/dev/null || echo "[]")"; shift 2 ;;
       --files) files="$(echo "$2" | jq -R 'split(",")' 2>/dev/null || echo "[]")"; shift 2 ;;
+      --quiet) quiet=true; shift ;;
       *) shift ;;
     esac
   done
@@ -54,14 +59,14 @@ session_log() {
     local result
     result="$(es_index "$IDX_SESSIONS" "$sess_id" "$doc")"
     if echo "$result" | jq -e '.result == "created"' > /dev/null 2>&1; then
-      echo "Logged [$action]: ${summary:0:60}"
+      $quiet || echo "Logged [$action]: ${summary:0:60}"
     else
       fallback_queue "$IDX_SESSIONS" "$sess_id" "$doc"
       echo "ES error — queued session log" >&2
     fi
   else
     fallback_queue "$IDX_SESSIONS" "$sess_id" "$doc"
-    echo "Offline — queued session log [$action]"
+    $quiet || echo "Offline — queued session log [$action]"
   fi
 }
 
