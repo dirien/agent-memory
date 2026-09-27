@@ -96,7 +96,14 @@ sbx create --name <sandbox> \
 ```
 
 Inside the sandbox `echo "$ELASTIC_MCP_API_KEY"` prints the placeholder, and
-`/mcp` shows `elastic-memory` connected. If you'd rather skip the proxy, pass
+`/mcp` shows `elastic-memory` connected.
+
+Verified on 2026-09-27: a request carrying only the placeholder reached the MCP
+endpoint with the real key (sandboxd replayed the `pulumi env get` command), and
+a request with any other `ApiKey` value got `401`. Unlike kit `credentials`
+injection, the custom secret replaces its placeholder and leaves other
+`Authorization` values alone, which is also what Pulumi's `update-token` calls
+need (see the known issue below; not yet tested for Pulumi). If you'd rather skip the proxy, pass
 both values with `sbx create --env-file .mcp.env ...`; the key then lives in the
 container's environment.
 
