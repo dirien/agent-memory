@@ -57,7 +57,7 @@ Written before the demo worked; these parts are now wrong:
 - "Docker Sandboxes: the key never enters the box": shows a kit `credentials` block. Keys now come from `sbx secret set-custom` placeholders resolved from ESC (`../kit/README.md`, "Why placeholders").
 - "Hooks are a package now": `apm install dirien/agent-memory`. Now the kit runs `apm install -g` at user scope; the repo has no project-level hooks.
 - Demo slide notes: `scripts/write-env.sh` no longer exists (no `.env`; `infra/esc.tf` writes the runtime ESC env). The verified demo script is `../DEMO.md`.
-- TODOs: meme choice (slide 4), upstream issue link for the `_id` bridge bug.
+- TODOs: meme choice (slide 4). The `_id` slide still says "pinned 0.16.0"; the fix is now terraform-provider 1.3.0 with elasticstack 0.16.5, and the upstream issue is pulumi/pulumi-terraform-provider#117.
 - Resources QR codes load from `api.qrserver.com` at render time; the demo constraint says pre-render them as PNGs into `public/`.
 
 ## Verified story material (use these, don't invent numbers)
@@ -66,7 +66,7 @@ Written before the demo worked; these parts are now wrong:
 | Memory lost its body | upstream memory-sync ran `sed '1,/^---$/d'` twice: every synced memory had empty content; `type` nested under `metadata:` was never read | commit `a802511` |
 | Recall was broken | ES\|QL `DECAY` rejects `"45d"`; needs a time duration (`1080 hours`), so default hybrid recall failed on every query | `acb536f` |
 | Dashboard rejected | Kibana's dashboards API has no `treemap` panel type; became a `pie` with explicit defaults to stop drift | `17acb64` |
-| Pulumi HCL + any TF provider, almost | `elastic/elasticstack` 0.16.1 adds `query_ruleset` with an `_id` output the dynamic bridge can't map; pinned 0.16.0 | `a187c54` |
+| Pulumi HCL + any TF provider, almost | `elastic/elasticstack` 0.16.1+ has a required `_id` attribute; `terraform-provider` 1.4.0 turned that into a hard error (pulumi-terraform-bridge#3597), 1.3.0 still loads it; running 0.16.5 on 1.3.0 | issue pulumi/pulumi-terraform-provider#117 |
 | HCL shape | list-of-object properties are blocks (`dynamic "panels"`), single objects are arguments | `b148192` |
 | Config as ESC, not `.env` | `pulumiservice_environment` writes `agent-memory/runtime` from stack outputs; `pulumi env run ... -- claude` | `adb86b9`, `../infra/esc.tf` |
 | Sandbox proxy vs Pulumi | proxy overwrites `Authorization` on `api.pulumi.com`, update-token calls get 401, so state is local in sandboxes | `fc357ce`, `../kit/README.md` |

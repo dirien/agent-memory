@@ -103,12 +103,16 @@ pass along with the project.
 
 ## Notes
 
-- `elastic/elasticstack` is pinned to `0.16.0`. From `0.16.1` on, the provider
-  ships `elasticsearch_query_ruleset`, whose `_id` output the dynamic Terraform
-  bridge can't map yet, and `pulumi install` fails.
+- `elastic/elasticstack` 0.16.5 runs on the `terraform-provider` 1.3.0 bridge plugin, pinned in
+  `sdks/elasticstack/hcl.sdk.json`. From 0.16.1 on, the provider ships
+  `elasticsearch_query_ruleset` with a required `_id` attribute, which
+  `terraform-provider` 1.4.0 rejects
+  ([pulumi/pulumi-terraform-provider#117](https://github.com/pulumi/pulumi-terraform-provider/issues/117)).
+  Don't run `pulumi install` here until that's fixed: it re-resolves the plugin to 1.4.0
+  and fails.
 - The project's admin credentials only exist in state (as secrets) and are
   used by the `elasticstack` provider. Nothing outside the stack gets them.
 - Kibana's dashboards API no longer accepts a `treemap` panel, so "Memory by
   Type" is a `pie`. Its `config_json` spells out the defaults Kibana fills in
-  (legend, styling, colors); with 0.16.0 anything left implicit shows up as
+  (legend, styling, colors); anything left implicit in `config_json` shows up as
   drift on every preview.

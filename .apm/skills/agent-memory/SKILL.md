@@ -31,7 +31,7 @@ re-litigate: an architecture choice, a convention the user corrected, the root
 cause of a bug, a credential *location* (never the value).
 
 ```bash
-bridge remember decision "Use Pulumi HCL for the Elastic stack; pin elasticstack to 0.16.0" \
+bridge remember decision "Use Pulumi HCL for the Elastic stack; pin the terraform-provider plugin to 1.3.0" \
   --title "IaC choice" --tags pulumi,elastic
 ```
 

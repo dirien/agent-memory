@@ -85,7 +85,7 @@ DEMO.md                 -> the demo runbook: two sandboxes, three acts, reset
 - `.github/workflows/publish-kit.yaml`: installs `sbx`, runs `sbx kit validate` + `sbx kit push` for `ghcr.io/dirien/agent-memory-kit` on kit changes on `main` (`:latest`) and on `v*` tags. Permissions: `contents: read`, `packages: write`.
 
 ## Key Decisions
-- `elastic/elasticstack` pinned to `0.16.0`: 0.16.1+ ships `elasticsearch_query_ruleset`, whose `_id` output breaks the dynamic Terraform bridge in `pulumi install`.
+- `elastic/elasticstack` 0.16.5 runs on the `terraform-provider` **1.3.0** bridge plugin, pinned in `infra/sdks/elasticstack/hcl.sdk.json`: 1.4.0 rejects the required `_id` attribute of `elasticsearch_query_ruleset` (0.16.1+), see pulumi/pulumi-terraform-provider#117. Don't run `pulumi install` in `infra/` until that's fixed; it re-resolves to 1.4.0 and fails.
 - In Docker Sandboxes, Pulumi state is local (`infra/.pulumi-state`, stack `local`): the credential proxy overwrites `Authorization` on `api.pulumi.com`, so update-token calls fail with 401.
 - No `.env` files: the stack writes `<org>/agent-memory/runtime` (ESC) with every setting and both keys.
 - Keys reach sandboxes as `sbx secret set-custom` placeholders (`sbx-cs-...`), resolved on the host from ESC; the proxy replaces only the placeholder.
