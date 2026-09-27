@@ -31,6 +31,13 @@ args:
       infra/.pulumi-state because the credential proxy breaks Pulumi Cloud
       updates (README: Known issue); "cloud" uses your Pulumi Cloud stack.
     enum: [local, cloud]
+  agent_memory_dir:
+    default: workspace
+    description: >-
+      Where the agent-memory clone is mounted in the sandbox. "workspace" means
+      the primary workspace is the clone. To give memory to another project,
+      pass the clone's absolute path and mount it as a second workspace:
+      sbx create ... claude <project> <agent-memory-clone>
 
 # Egress allow-list. Serverless project hosts are <alias>-<id>.es.<region>.elastic.cloud,
 # one label deep, so the single-label wildcards below are enforced.
@@ -96,9 +103,13 @@ setup:
           apt-get update -qq && apt-get install -y -qq $missing
         fi
   files:
-    # Records where the workspace is mounted, for the startup step below.
+    # Records where the workspace and the agent-memory clone are mounted, for
+    # the startup step below.
     - path: /home/agent/.config/elastic-memory/workspace
       content: "${WORKDIR}"
+      mode: "0644"
+    - path: /home/agent/.config/elastic-memory/agent-memory-dir
+      content: "${{ kit.args.agent_memory_dir }}"
       mode: "0644"
   startup:
     # Argv form (not shell-interpreted by the kit engine). Idempotent and non-fatal.
@@ -108,9 +119,13 @@ setup:
         - bash
         - -lc
         - |
-          ws="$(cat "$HOME/.config/elastic-memory/workspace" 2>/dev/null)"
-          f="$ws/scripts/sbx-startup.sh"
-          [ -f "$f" ] && bash "$f" || true
+          cfg="$HOME/.config/elastic-memory"
+          ws="$(cat "$cfg/workspace" 2>/dev/null)"
+          am="$(cat "$cfg/agent-memory-dir" 2>/dev/null)"
+          if [ -z "$am" ] || [ "$am" = "workspace" ]; then am="$ws"; fi
+          f="$am/scripts/sbx-startup.sh"
+          if [ -f "$f" ]; then bash "$f"; else echo "[elastic-memory] no agent-memory clone at $am"; fi
+          true
 
 agentInstructions:
   content: |

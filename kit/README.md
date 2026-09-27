@@ -49,6 +49,26 @@ local `./kit` paths are allowed by default.
 |---|---|---|
 | `elastic_region` | `us-east-1.aws` | Region part of the project endpoints. Pulumi's `aws-us-east-1` becomes `us-east-1.aws`. |
 | `backend` | `local` | State backend for `scripts/pulumi.sh`: `local` (`infra/.pulumi-state`) or `cloud` (Pulumi Cloud). See the known issue below. |
+| `agent_memory_dir` | `workspace` | Where the agent-memory clone is mounted. `workspace` means the primary workspace is the clone; for another project, pass the clone's absolute path and mount it as a second workspace (below). |
+
+## Give memory to any project
+
+The primary workspace can be any project. Mount your agent-memory clone next
+to it and point the kit at it; the startup step then links `bridge`, installs
+the hooks, skill and MCP server at user scope, and reads `.env` from the clone:
+
+```bash
+AM=/path/to/agent-memory                     # your clone, with .env written
+sbx create --name <sandbox> --skills=off \
+  --env ELASTIC_KIBANA_HOST="$(pulumi env get <org>/agent-memory/elastic-cloud mcp.kibanaHost --value string)" \
+  --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 --kit "$AM/kit" \
+  --kit-arg elastic-memory.agent_memory_dir="$AM" \
+  claude /path/to/your/project "$AM"
+sbx run --name <sandbox>
+```
+
+The clone must be mounted read-write: `bridge` keeps its sync state and offline
+queue next to itself.
 
 Pass them with `--kit-arg elastic-memory.<arg>=<value>`.
 
