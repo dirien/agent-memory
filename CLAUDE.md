@@ -122,15 +122,14 @@ fallback/                 — offline queue; synced files go to .synced/
 
 ## Claude Code Hook Setup
 
-Add to Claude Code `settings.json` after running `install.sh`:
-```json
-{
-  "PostToolUse": [{
-    "matcher": "Write|Edit|MultiEdit",
-    "hooks": [{"type": "command", "command": "/path/to/agent-memory/hooks/index-file.sh"}]
-  }]
-}
-```
+`apm install` deploys the hooks from `.apm/hooks/agent-memory.json` (SessionStart, PostToolUse, SessionEnd) into `.claude/settings.json`. Without APM, copy `hooks/settings.json.template`.
+
+## Infrastructure, APM and the sandbox kit
+
+- `infra/` is a Pulumi HCL program (`runtime: hcl`) for the Serverless project, indices, scoped API key and dashboard. `pulumi preview` before `pulumi up`; `scripts/write-env.sh` turns the stack outputs into `.env`. `elastic/elasticstack` stays pinned to 0.16.0 (see `infra/README.md`).
+- Hooks and the `agent-memory` skill are APM primitives under `.apm/`. Edit `.apm/hooks/agent-memory.json` or `hooks/*.sh`, then run `apm install` to redeploy `.claude/`. Don't hand-edit `.claude/settings.json` or `.claude/hooks/`.
+- `kit/spec.yaml` is a Docker Sandboxes mixin kit; `scripts/sbx-startup.sh` is its startup step. Validate on the host with `sbx kit validate ./kit`.
+- `bridge` must stay portable across macOS (BSD userland, bash from Homebrew) and Linux (GNU): no `sed -i`, no `md5`-only calls.
 
 ## CLAUDE.md Template
 

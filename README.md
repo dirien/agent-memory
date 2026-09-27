@@ -18,17 +18,81 @@ Claude Code agents are stateless between sessions. agent-memory gives them a sha
 
 Recalling a stored memory costs a single search query. The alternative is loading files into context or re-deriving conclusions. Entity search replaces shell globbing and grep with a semantic query that returns the relevant file, not a wall of results.
 
+## About this fork
+
+This fork of [jeffvestal/agent-memory](https://github.com/jeffvestal/agent-memory) adds:
+
+- **`infra/`**: a [Pulumi HCL](https://www.pulumi.com/docs/iac/languages-sdks/hcl/) program that creates the Elasticsearch Serverless project, the seven indices, a scoped API key and the Kibana dashboard.
+- **APM packaging** (`apm.yml`, `.apm/`): the Claude Code hooks and an `agent-memory` skill ship as an [APM](https://github.com/microsoft/apm) package, so `apm install` wires them instead of hand-edited `settings.json`.
+- **`kit/`**: a [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) kit that runs all of it inside a Claude Code sandbox, with the Elastic Cloud key injected by the credential proxy.
+- Fixes so `bridge` runs on Linux (the sandbox) as well as macOS, and so synced auto-memories keep their body and type.
+
 ## Quick start
 
-**Requirements:** Elasticsearch Serverless or Elasticsearch 9.3+ · `jq` (`brew install jq` on macOS) · A Jina API key (self-managed ES only — Serverless uses the Elastic Inference Service automatically)
+**Requirements:** Elasticsearch Serverless (or Elasticsearch 9.3+) · bash 4.3+ (`brew install bash` on macOS) · `jq`, `curl`, `openssl`
+
+Pick one of three setups. They end in the same place: a `.env` next to `bridge`, the hooks active in Claude Code, and `bridge status` showing online.
+
+### A. Docker Sandboxes (everything wired)
+
+On the host, bind your credentials once, then start Claude Code in a sandbox with the infrastructure kit (Pulumi + APM) and this repo's kit:
 
 ```bash
-git clone https://github.com/jeffvestal/agent-memory && cd agent-memory
+sbx secret set -g pulumi           # Pulumi Cloud token
+sbx secret set -g elastic-cloud    # Elastic Cloud API key
+
+git clone https://github.com/dirien/agent-memory && cd agent-memory
+sbx run \
+  --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 \
+  --kit ./kit \
+  --kit-arg elastic-memory.stack=<org>/agent-memory-infra/dev \
+  claude .
+```
+
+Inside the sandbox, deploy the backend and write `.env`:
+
+```bash
+cd infra && pulumi stack init <org>/dev && pulumi up && cd ..
+scripts/write-env.sh
+bridge status
+```
+
+`bridge` is already on PATH and the hooks are active. Details: [`kit/README.md`](kit/README.md).
+
+### B. Pulumi, without a sandbox
+
+Install [Pulumi](https://www.pulumi.com/docs/install/) (3.256+) and [APM](https://github.com/microsoft/apm) (`curl -sSL https://aka.ms/apm-unix | sh`), then:
+
+```bash
+git clone https://github.com/dirien/agent-memory && cd agent-memory
+
+# Elastic Cloud API key → Pulumi ESC (the stack imports this environment)
+pulumi env init <org>/agent-memory/elastic-cloud
+read -rs EC_KEY && printf '%s' "$EC_KEY" | \
+  pulumi env set <org>/agent-memory/elastic-cloud environmentVariables.EC_API_KEY --secret -f -
+
+cd infra && pulumi stack init <org>/dev && pulumi up && cd ..
+scripts/write-env.sh                       # .env from the stack outputs
+ln -s "$PWD/bridge" ~/.local/bin/bridge    # or add this directory to PATH
+apm install                                # hooks + skill into .claude/
+bridge status
+```
+
+What the Elastic Cloud key needs and every stack option: [`infra/README.md`](infra/README.md).
+
+### C. Manual (`install.sh`)
+
+If you already have an Elasticsearch project and an API key:
+
+```bash
+git clone https://github.com/dirien/agent-memory && cd agent-memory
 ./install.sh
 ./bridge status
 ```
 
-`install.sh` walks you through credentials interactively (or reads an existing `.env`), creates the Jina v5 inference endpoint, and sets up all indices. `bridge status` confirms connectivity. Add `bridge` to your `PATH` once setup completes.
+`install.sh` walks you through credentials interactively (or reads an existing `.env`), creates the inference endpoint, and sets up all indices. `bridge status` confirms connectivity. Add `bridge` to your `PATH` once setup completes.
+
+### First memories
 
 After `bridge status` shows online, run:
 
@@ -40,53 +104,21 @@ bridge recall "install"                                               # verify h
 
 ## Hook integration
 
-Copy `hooks/settings.json.template` into your project's `.claude/settings.json` and replace `REPLACE_WITH_AGENT_MEMORY_PATH` with the absolute path to your agent-memory clone:
+The hooks ship as an APM package. In this repo, `apm install` deploys them (and the `agent-memory` skill) into `.claude/`; the result is committed, so a fresh clone already has them. In any other project:
 
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/path/to/agent-memory/bridge sync-memories && /path/to/agent-memory/bridge heartbeat"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/path/to/agent-memory/hooks/index-file.sh"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/path/to/agent-memory/bridge log --action session-end --quiet"
-          }
-        ]
-      }
-    ]
-  }
-}
+```bash
+apm install dirien/agent-memory   # hooks + skill; they call `bridge` from PATH
 ```
+
+Without APM, copy `hooks/settings.json.template` into your project's `.claude/settings.json` and replace `REPLACE_WITH_AGENT_MEMORY_PATH` with the absolute path to your agent-memory clone.
 
 | Hook | Trigger | What it does |
 |---|---|---|
-| `SessionStart` | Agent session opens | Syncs auto-memory files to ES; sends heartbeat |
-| `PostToolUse` | Any Write / Edit / MultiEdit | Indexes changed `.md` files as searchable entities |
-| `Stop` | Agent session ends | Logs a session-end event to history |
+| `SessionStart` | Agent session opens | Syncs auto-memory files to ES, sends a heartbeat, reminds the agent to recall |
+| `PostToolUse` | Any Write / Edit / MultiEdit / NotebookEdit | Indexes changed `.md` files as searchable entities |
+| `SessionEnd` | Agent session ends | Logs a session-end event and suspends in-flight tasks |
+
+Every hook exits 0: with no `.env` they stay silent, and when Elasticsearch is unreachable writes queue in `fallback/` until `bridge sync`.
 
 ## Configuration reference
 
@@ -118,7 +150,7 @@ Copy `.env.example` to `.env` (or let `install.sh` create it).
 └──────────────────────┬──────────────────────────────┘
                        │  SessionStart hook (sync + heartbeat)
                        │  PostToolUse hook  (every .md write)
-                       │  Stop hook         (session-end log)
+                       │  SessionEnd hook   (session-end log)
                        ▼
 ┌─────────────────────────────────────────────────────┐
 │           bridge CLI  (lib/*.sh modules)            │
