@@ -3,6 +3,7 @@
 #
 # Usage: scripts/write-env.sh            # uses the stack selected in infra/
 #        AGENT_MEMORY_STACK=org/agent-memory-infra/dev scripts/write-env.sh
+#        AGENT_MEMORY_BACKEND=local scripts/write-env.sh   # local state backend
 #
 # Keys the stack owns are replaced; anything else already in .env
 # (BRIDGE_WATCH_DIRS, BRIDGE_MEMORY_PATH, ...) is kept.
@@ -11,9 +12,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ENV_FILE="$ROOT/.env"
 STACK_ARGS=()
-[[ -n "${AGENT_MEMORY_STACK:-}" ]] && STACK_ARGS=(--stack "$AGENT_MEMORY_STACK")
+if [[ -n "${AGENT_MEMORY_STACK:-}" && "${AGENT_MEMORY_BACKEND:-cloud}" == "cloud" ]]; then
+  STACK_ARGS=(--stack "$AGENT_MEMORY_STACK")
+fi
 
-dotenv="$(pulumi stack output dotenv --show-secrets --cwd "$ROOT/infra" ${STACK_ARGS[@]+"${STACK_ARGS[@]}"})"
+dotenv="$("$ROOT/scripts/pulumi.sh" stack output dotenv --show-secrets ${STACK_ARGS[@]+"${STACK_ARGS[@]}"})"
 if [[ -z "$dotenv" ]]; then
   echo "Stack has no 'dotenv' output yet. Run 'pulumi up' in infra/ first." >&2
   exit 1

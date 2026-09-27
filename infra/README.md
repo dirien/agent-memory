@@ -38,6 +38,8 @@ registry and bridges them on the fly; `pulumi install` records that in
 
 ## Deploy
 
+With a Pulumi Cloud stack (on your machine):
+
 ```bash
 cd infra
 pulumi stack init <org>/dev            # Pulumi.dev.yaml imports agent-memory/elastic-cloud
@@ -47,6 +49,22 @@ pulumi up
 ../scripts/write-env.sh                # writes ../.env from the stack outputs
 ../bridge status
 ```
+
+With a local state backend (the default inside the Docker Sandboxes kit):
+
+```bash
+export AGENT_MEMORY_BACKEND=local      # the kit sets this for you
+scripts/pulumi.sh preview              # from the repo root
+scripts/pulumi.sh up
+scripts/write-env.sh
+bridge status
+```
+
+`scripts/pulumi.sh` keeps state in `infra/.pulumi-state` (stack `local`,
+gitignored) and runs Pulumi inside `pulumi env run <you>/agent-memory/elastic-cloud`,
+so `EC_API_KEY` and `PULUMI_CONFIG_PASSPHRASE` come from ESC. Set
+`AGENT_MEMORY_ESC_ENV` to use another environment. Why the sandbox needs this:
+[`../kit/README.md`](../kit/README.md#known-issue-pulumi-up-and-the-proxy-managed-pulumi-token).
 
 Project creation takes about a minute. The first write to a `semantic_text`
 field can take a few seconds while the inference endpoint warms up.
@@ -85,3 +103,7 @@ pass along with the project.
   bridge can't map yet, and `pulumi install` fails.
 - The project's admin credentials only exist in state (as secrets) and are
   used by the `elasticstack` provider. Nothing outside the stack gets them.
+- Kibana's dashboards API no longer accepts a `treemap` panel, so "Memory by
+  Type" is a `pie`. Its `config_json` spells out the defaults Kibana fills in
+  (legend, styling, colors); with 0.16.0 anything left implicit shows up as
+  drift on every preview.
