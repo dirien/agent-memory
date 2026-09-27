@@ -6,10 +6,6 @@
 # the project root (the project is agent-memory itself), then `bridge` on PATH.
 # APM copies only the hooks/ bundle into .claude/hooks/agent-memory/.
 
-# Opt out per machine or sandbox without touching the shared project settings,
-# e.g. "env": {"AGENT_MEMORY_HOOKS": "off"} in ~/.claude/settings.json.
-[[ "${AGENT_MEMORY_HOOKS:-on}" == "off" ]] && return 1
-
 _hooks_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [[ -z "${BRIDGE_BIN:-}" ]]; then

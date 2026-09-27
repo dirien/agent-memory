@@ -18,7 +18,7 @@ deployments:
   owners:
   - .
   active_owner: .
-  content_hash: sha256:e9896da2a6075341b740c7910c525f78f15adbe6efb3d168faa22d9ac9766294
+  content_hash: sha256:c045a21ffcb9802686bf0e7c091b2f325fb50409261fa6d2cd8498eb09dd24df
 - kind: project-relative
   target: claude
   value: .claude/hooks/agent-memory/hooks/session-end.sh
@@ -96,7 +96,7 @@ local_deployed_files:
 - .claude/skills/agent-memory/SKILL.md
 local_deployed_file_hashes:
   .claude/hooks/agent-memory/hooks/index-file.sh: sha256:9eb52a3c1c93fc467970ccc3acf0a930fe377e97b2b9dcebe5a7e79eabb8b286
-  .claude/hooks/agent-memory/hooks/resolve-bridge.sh: sha256:e9896da2a6075341b740c7910c525f78f15adbe6efb3d168faa22d9ac9766294
+  .claude/hooks/agent-memory/hooks/resolve-bridge.sh: sha256:c045a21ffcb9802686bf0e7c091b2f325fb50409261fa6d2cd8498eb09dd24df
   .claude/hooks/agent-memory/hooks/session-end.sh: sha256:8d622bef05d634eb002a54c416bc4c6e5b495b958e78cebf200bfabdfa63a2b9
   .claude/hooks/agent-memory/hooks/session-start.sh: sha256:0000bcbb72f676a38bcba20c51887d1398965306a1d6ef1cd728f91b2a0d9f33
   .claude/hooks/agent-memory/hooks/settings.json.template: sha256:a119642b2c74bf5ef6f73ead9fcdf2cf3a9ca88cb36c6f9331146004da3933e5
