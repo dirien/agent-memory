@@ -53,6 +53,7 @@ TASKS
   bridge task done <task_id> [--outcome O]
   bridge task fail <task_id> [--reason R]
   bridge task list [--agent X] [--status S] [--limit N]
+  bridge task open [--limit N]          Unfinished tasks of this agent
   bridge task current
 
 WORKFLOW (Elastic Workflows)

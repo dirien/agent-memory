@@ -60,8 +60,9 @@ task_dispatch() {
     done)    shift; task_done "$@" ;;
     fail)    shift; task_fail "$@" ;;
     list)    shift; task_list "$@" ;;
+    open)    shift; task_open "$@" ;;
     current) shift; task_current "$@" ;;
-    *)       echo "Unknown task command: ${1:-}" >&2; echo "Usage: bridge task {start|update|done|fail|list|current}" >&2; exit 1 ;;
+    *)       echo "Unknown task command: ${1:-}" >&2; echo "Usage: bridge task {start|update|done|fail|list|open|current}" >&2; exit 1 ;;
   esac
 }
 
@@ -300,6 +301,41 @@ task_fail() {
 
 # List tasks
 # Usage: task_list [--agent X] [--status S] [--limit N]
+# Unfinished tasks (created, in_progress or suspended) of this agent, newest first
+# Usage: task_open [--limit N]
+task_open() {
+  local limit=10
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --limit) limit="$2"; shift 2 ;;
+      *) shift ;;
+    esac
+  done
+
+  if ! es_online; then
+    echo "Offline — cannot query tasks"
+    return 1
+  fi
+
+  local query
+  query="$(jq -n --arg agent "$BRIDGE_AGENT_ID" --argjson limit "$limit" '{
+    query: {bool: {filter: [
+      {term: {agent: $agent}},
+      {terms: {status: ["created", "in_progress", "suspended"]}}
+    ]}},
+    sort: [{updated_at: "desc"}],
+    size: $limit
+  }')"
+
+  local result
+  result="$(es_search "$IDX_TASKS" "$query")"
+  if [[ "$(echo "$result" | jq '.hits.total.value // 0')" == "0" ]]; then
+    echo "No open tasks."
+    return
+  fi
+  echo "$result" | jq -r '.hits.hits[]._source | "\(.updated_at | split("T")[0]) [\(.status)] \(.title) [\(.task_id)] (from \(.machine // "?"))"'
+}
+
 task_list() {
   local agent_filter="" status_filter="" limit=10
   while [[ $# -gt 0 ]]; do
