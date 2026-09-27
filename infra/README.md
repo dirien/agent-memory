@@ -9,6 +9,7 @@ on Elastic Cloud Serverless:
 | `elasticstack_elasticsearch_index` ×7 | `elastic/elasticstack` | `agent-memory`, `agent-messages`, `agent-sessions`, `agent-tasks`, `agent-status`, `<agent>-entities`, `<agent>-entity-history`; `semantic_text` fields use Jina v5 on the Elastic Inference Service |
 | `elasticstack_elasticsearch_security_api_key` | `elastic/elasticstack` | a key scoped to those indices, for the `bridge` CLI |
 | `elasticstack_kibana_dashboard` | `elastic/elasticstack` | the Agent Memory overview, built from `setup/dashboards/agent-memory-overview.json` |
+| `elasticstack_elasticsearch_security_api_key` (`mcp`) | `elastic/elasticstack` | a read-only key for Kibana's Agent Builder MCP server (`feature_agentBuilder.read` + `read` on the memory indices) |
 
 Both providers are Terraform providers. Pulumi HCL pulls them from the OpenTofu
 registry and bridges them on the fly; `pulumi install` records that in
@@ -77,6 +78,7 @@ field can take a few seconds while the inference endpoint warms up.
 | `dashboard_url` | the Agent Memory overview in Kibana |
 | `bridge_api_key` (secret) | the scoped key |
 | `dotenv` (secret) | a ready `.env`; `scripts/write-env.sh` merges it into `../.env` |
+| `mcp_url`, `mcp_api_key` (secret) | Agent Builder MCP endpoint and its read-only key; `scripts/write-env.sh` puts the host and key into `../.claude/settings.local.json` for the `elastic-memory` server in `.mcp.json` |
 
 ## Config
 
