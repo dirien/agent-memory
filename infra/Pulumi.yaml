@@ -1,0 +1,7 @@
+name: agent-memory-infra
+description: Elasticsearch Serverless backend for agent-memory, written in Pulumi HCL
+runtime: hcl
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: hcl

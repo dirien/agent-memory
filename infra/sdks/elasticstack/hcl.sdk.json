@@ -1,0 +1,14 @@
+{
+  "Name": "terraform-provider",
+  "Kind": "resource",
+  "Version": "1.4.0",
+  "PluginDownloadURL": "",
+  "Checksums": null,
+  "Parameterization": {
+    "Name": "elasticstack",
+    "Version": "0.16.0",
+    "Value": "eyJyZW1vdGUiOnsidXJsIjoicmVnaXN0cnkub3BlbnRvZnUub3JnL2VsYXN0aWMvZWxhc3RpY3N0YWNrIiwidmVyc2lvbiI6IjAuMTYuMCJ9fQ=="
+  },
+  "ExtensionParameterization": null,
+  "source": "registry.opentofu.org/elastic/elasticstack"
+}

@@ -1,0 +1,7 @@
+# EC_API_KEY comes from this ESC environment (set once, see infra/README.md).
+# Inside a Docker Sandbox the kit's credential proxy can inject it instead.
+environment:
+  - agent-memory/elastic-cloud
+config:
+  agent-memory-infra:agent_id: claude
+  agent-memory-infra:region: aws-us-east-1
