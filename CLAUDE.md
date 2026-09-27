@@ -126,7 +126,7 @@ fallback/                 — offline queue; synced files go to .synced/
 
 ## Infrastructure, APM and the sandbox kit
 
-- `infra/` is a Pulumi HCL program (`runtime: hcl`) for the Serverless project, indices, scoped API key and dashboard. `pulumi preview` before `pulumi up`; `scripts/write-env.sh` turns the stack outputs into `.env`. `elastic/elasticstack` stays pinned to 0.16.0 (see `infra/README.md`).
+- `infra/` is a Pulumi HCL program (`runtime: hcl`) for the Serverless project, indices, scoped API key and dashboard. Run it through `scripts/pulumi.sh` (`preview` before `up`); inside Docker Sandboxes `AGENT_MEMORY_BACKEND=local` keeps state in `infra/.pulumi-state`. `scripts/write-env.sh` turns the stack outputs into `.env`. `elastic/elasticstack` stays pinned to 0.16.0 (see `infra/README.md`).
 - Hooks and the `agent-memory` skill are APM primitives under `.apm/`. Edit `.apm/hooks/agent-memory.json` or `hooks/*.sh`, then run `apm install` to redeploy `.claude/`. Don't hand-edit `.claude/settings.json` or `.claude/hooks/`.
 - `kit/spec.yaml` is a Docker Sandboxes mixin kit; `scripts/sbx-startup.sh` is its startup step. Validate on the host with `sbx kit validate ./kit`.
 - `bridge` must stay portable across macOS (BSD userland, bash from Homebrew) and Linux (GNU): no `sed -i`, no `md5`-only calls.

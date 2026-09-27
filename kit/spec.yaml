@@ -29,6 +29,14 @@ args:
     description: >-
       Fully qualified Pulumi stack for scripts/write-env.sh
       (e.g. myorg/agent-memory-infra/dev). Empty uses the stack selected in infra/.
+      Only used with backend=cloud.
+  backend:
+    default: local
+    description: >-
+      State backend for scripts/pulumi.sh. "local" keeps state in
+      infra/.pulumi-state because the credential proxy breaks Pulumi Cloud
+      updates (README: Known issue); "cloud" uses your Pulumi Cloud stack.
+    enum: [local, cloud]
 
 # Egress allow-list. Serverless project hosts are <alias>-<id>.es.<region>.elastic.cloud,
 # one label deep, so the single-label wildcards below are enforced.
@@ -77,6 +85,7 @@ credentials:
 environment:
   variables:
     AGENT_MEMORY_STACK: "${{ kit.args.stack }}"
+    AGENT_MEMORY_BACKEND: "${{ kit.args.backend }}"
     # Serverless round trips from the sandbox proxy can exceed the 5s default.
     BRIDGE_TIMEOUT: "10"
 
@@ -126,7 +135,9 @@ agentInstructions:
     - Hooks already sync ~/.claude auto-memory at session start, index every
       markdown file you write, and log the session end.
 
-    Infrastructure lives in `infra/` (Pulumi HCL, runtime: hcl). `EC_API_KEY`
-    is proxy-managed, so `pulumi up` authenticates to Elastic Cloud without the
-    key entering the container. After `pulumi up`, run `scripts/write-env.sh`
-    to write `.env`. Never print or commit `.env`; it holds the project API key.
+    Infrastructure lives in `infra/` (Pulumi HCL, runtime: hcl). Run Pulumi
+    through `scripts/pulumi.sh` (`scripts/pulumi.sh preview`, `... up`), not
+    bare `pulumi`: with AGENT_MEMORY_BACKEND=local it keeps state in
+    infra/.pulumi-state and pulls EC_API_KEY and the state passphrase from ESC.
+    After `up`, run `scripts/write-env.sh` to write `.env`. Never print or
+    commit `.env`; it holds the project API key.

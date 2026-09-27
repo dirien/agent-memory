@@ -7,15 +7,23 @@ which brings Pulumi, APM and the guardrail hooks:
 
 ```bash
 # one-time, on the host
-sbx secret set -g pulumi           # Pulumi Cloud token
-sbx secret set -g elastic-cloud    # Elastic Cloud API key (see ../infra/README.md)
+sbx secret set pulumi              # Pulumi Cloud token (ESC reads go through it)
+pulumi env init <org>/agent-memory/elastic-cloud -f infra/esc/elastic-cloud.yaml
+# then set elastic.apiKey and state.passphrase in it (see ../infra/README.md)
 
 # from the root of your agent-memory clone
 sbx run \
   --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 \
   --kit ./kit \
-  --kit-arg elastic-memory.stack=<org>/agent-memory-infra/dev \
   claude .
+```
+
+Inside the sandbox:
+
+```bash
+scripts/pulumi.sh up       # local state backend, EC_API_KEY from ESC
+scripts/write-env.sh       # .env for the bridge CLI
+bridge status
 ```
 
 Kits apply in `--kit` order, so the infrastructure kit's Pulumi and APM are on
@@ -29,7 +37,7 @@ local `./kit` paths are allowed by default.
 |---|---|
 | `permissions.network.allow` | `api.elastic-cloud.com`, your project's `*.es.<region>.elastic.cloud` and `*.kb.<region>.elastic.cloud`, the Pulumi service, the OpenTofu registry and GitHub (the `ec` and `elasticstack` providers), Ubuntu mirrors, npm |
 | `credentials` | service `elastic-cloud`: `EC_API_KEY` is proxy-managed, and the proxy injects `Authorization: ApiKey <key>` on `api.elastic-cloud.com` |
-| `environment.variables` | `AGENT_MEMORY_STACK` (from the `stack` arg), `BRIDGE_TIMEOUT=10` |
+| `environment.variables` | `AGENT_MEMORY_BACKEND` and `AGENT_MEMORY_STACK` (from the args), `BRIDGE_TIMEOUT=10` |
 | `setup.install` | installs `jq`, `curl`, `openssl` when the image lacks them |
 | `setup.files` | records the workspace path (`${WORKDIR}`) for the startup step |
 | `setup.startup` | runs `scripts/sbx-startup.sh`: links `bridge` into `~/.local/bin`, runs `apm install` (hooks + skill), writes `.env` from the stack when it's missing |
@@ -40,7 +48,8 @@ local `./kit` paths are allowed by default.
 | Arg | Default | Purpose |
 |---|---|---|
 | `elastic_region` | `us-east-1.aws` | Region part of the project endpoints. Pulumi's `aws-us-east-1` becomes `us-east-1.aws`. |
-| `stack` | empty | Fully qualified stack for `scripts/write-env.sh`. Empty means the stack selected in `infra/`. |
+| `stack` | empty | Fully qualified stack for `scripts/write-env.sh` with `backend=cloud`. Empty means the stack selected in `infra/`. |
+| `backend` | `local` | State backend for `scripts/pulumi.sh`: `local` (`infra/.pulumi-state`) or `cloud` (Pulumi Cloud). See the known issue below. |
 
 Pass them with `--kit-arg elastic-memory.<arg>=<value>`.
 
@@ -48,11 +57,12 @@ Pass them with `--kit-arg elastic-memory.<arg>=<value>`.
 
 `pulumi up` needs `EC_API_KEY`. Pick one:
 
-- **Sandbox proxy**: `sbx secret set -g elastic-cloud`. The key never enters the
-  container.
-- **Pulumi ESC**: store it in the `agent-memory/elastic-cloud` environment the
-  stack imports. This also works outside a sandbox. If both are set, the ESC
-  value wins inside the Pulumi process, and the proxy still rewrites the header.
+- **Pulumi ESC**: store it in the `agent-memory/elastic-cloud` environment
+  ([template](../infra/esc/elastic-cloud.yaml)). This also works outside a
+  sandbox, and the local backend needs the environment for its passphrase anyway.
+- **Sandbox proxy**: `sbx secret set elastic-cloud`. The proxy sets
+  `Authorization: ApiKey <key>` on every `api.elastic-cloud.com` request, so it
+  wins even if ESC still holds the placeholder. The key never enters the container.
 
 The project's own API key (the one `bridge` uses) is created by Pulumi and lands
 in the workspace's `.env` through `scripts/write-env.sh`. It is scoped to the
@@ -67,17 +77,31 @@ event, checkpoint and `complete` calls with a per-update `update-token`, and
 those come back `401`. `pulumi up` then fails with *"this command requires
 logging in"* after it has already changed cloud resources.
 
-Until the proxy only substitutes the `proxy-managed` placeholder, give the
-sandbox a real token and drop the proxy binding for it (on the host):
+That's why the kit defaults to `backend=local`: `scripts/pulumi.sh` keeps the
+state in `infra/.pulumi-state` (stack `local`) and wraps the run in
+`pulumi env run`, which only *reads* ESC, and reads work through the proxy.
+ESC supplies `EC_API_KEY` and `PULUMI_CONFIG_PASSPHRASE`
+(see [`../infra/esc/elastic-cloud.yaml`](../infra/esc/elastic-cloud.yaml)).
 
 ```bash
-sbx secret ls                                   # find the pulumi binding
-sbx secret rm -g pulumi                         # or remove it for this sandbox only
-sbx exec -d <sandbox> bash -c \
+scripts/pulumi.sh preview
+scripts/pulumi.sh up
+scripts/write-env.sh
+```
+
+To keep state in Pulumi Cloud instead (`--kit-arg elastic-memory.backend=cloud`),
+the sandbox needs a real token and no proxy binding for `pulumi`. A global
+secret can't be disabled for one sandbox, so move the others to scoped secrets
+before removing the global one (on the host):
+
+```bash
+printf '%s\n' "$PULUMI_ACCESS_TOKEN" | sbx secret set pulumi --sandbox <each-other-sandbox>
+sbx secret rm pulumi
+sbx exec -d <this-sandbox> bash -c \
   "printf 'export PULUMI_ACCESS_TOKEN=%s\n' \"$PULUMI_ACCESS_TOKEN\" >> /etc/sandbox-persistent.sh"
 ```
 
-Check from inside the sandbox: a bogus token must now be rejected.
+Then a bogus token must be rejected from inside the sandbox:
 
 ```bash
 curl -s -o /dev/null -w '%{http_code}\n' -H 'Authorization: token bogus' https://api.pulumi.com/api/user   # 401

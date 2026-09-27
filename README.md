@@ -35,29 +35,33 @@ Pick one of three setups. They end in the same place: a `.env` next to `bridge`,
 
 ### A. Docker Sandboxes (everything wired)
 
-On the host, bind your credentials once, then start Claude Code in a sandbox with the infrastructure kit (Pulumi + APM) and this repo's kit:
+On the host, bind the Pulumi token and create the ESC environment once, then start Claude Code in a sandbox with the infrastructure kit (Pulumi + APM) and this repo's kit:
 
 ```bash
-sbx secret set -g pulumi           # Pulumi Cloud token
-sbx secret set -g elastic-cloud    # Elastic Cloud API key
+sbx secret set pulumi              # Pulumi Cloud token
 
 git clone https://github.com/dirien/agent-memory && cd agent-memory
+pulumi env init <org>/agent-memory/elastic-cloud -f infra/esc/elastic-cloud.yaml
+read -rs EC_KEY && printf '%s' "$EC_KEY" | \
+  pulumi env set <org>/agent-memory/elastic-cloud elastic.apiKey --secret -f -
+openssl rand -base64 36 | tr -d '\n' | \
+  pulumi env set <org>/agent-memory/elastic-cloud state.passphrase --secret -f -
+
 sbx run \
   --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 \
   --kit ./kit \
-  --kit-arg elastic-memory.stack=<org>/agent-memory-infra/dev \
   claude .
 ```
 
 Inside the sandbox, deploy the backend and write `.env`:
 
 ```bash
-cd infra && pulumi stack init <org>/dev && pulumi up && cd ..
+scripts/pulumi.sh up        # state in infra/.pulumi-state; keys from ESC
 scripts/write-env.sh
 bridge status
 ```
 
-`bridge` is already on PATH and the hooks are active. Details: [`kit/README.md`](kit/README.md).
+The sandbox keeps Pulumi state locally because its credential proxy breaks Pulumi Cloud updates; [`kit/README.md`](kit/README.md) explains why and how to switch to a Pulumi Cloud stack. `bridge` is already on PATH and the hooks are active.
 
 ### B. Pulumi, without a sandbox
 
