@@ -40,6 +40,12 @@ sbx create --name my-agent --skills=off \
 sbx run --name my-agent
 ```
 
+`set-custom` won't overwrite an existing secret for the same variable ("custom
+secret env ... already exists"). To repoint one, remove it by its placeholder
+and create it again with the same placeholder, so running sandboxes keep
+working: `sbx secret rm --placeholder <sbx-cs-…> -f`, then the `set-custom`
+command above plus `--placeholder <sbx-cs-…>`.
+
 Keep `sbx create` and `sbx run` separate: the kit's startup step installs the
 hooks while the sandbox starts, before Claude does. Remote kit sources need a
 one-time `sbx settings set kit.allowedSources '["docker.io/","ghcr.io/dirien/","github.com/dirien/"]'`.
@@ -86,10 +92,11 @@ and the proxy replaces only that placeholder in the request headers, for any
 host matching the pattern (wildcards allowed).
 ([reference](https://docs.docker.com/reference/cli/sbx/secret/set-custom/), experimental.)
 
-Verified on 2026-09-27 for the MCP key: a request carrying only the placeholder
-reached Kibana with the real key (sandboxd replayed the `pulumi env get`
-command), a request with any other `ApiKey` value got `401`, and after rotating
-the key in Pulumi the placeholder kept working without touching the sbx secret.
+Verified on 2026-09-27 for both keys: a request carrying only the placeholder
+reached Kibana (MCP key) or Elasticsearch (bridge key) with the real key,
+because sandboxd replayed the `pulumi env get` command; a request with any other
+`ApiKey` value got `401`. After rotating the MCP key in Pulumi, the placeholder
+kept working without touching the sbx secret.
 
 ## Known issue: `pulumi up` and the proxy-managed Pulumi token
 
