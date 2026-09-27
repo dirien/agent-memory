@@ -130,7 +130,7 @@ resource "elasticstack_elasticsearch_security_api_key" "bridge" {
     agent_memory = {
       cluster = ["monitor", "monitor_inference"]
       indices = [{
-        names      = [for name, _ in local.indices : name]
+        names      = keys(local.indices)
         privileges = ["all"]
       }]
     }
