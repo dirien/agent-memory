@@ -20,5 +20,13 @@ file_path="$(echo "$payload" | jq -r '.tool_input.file_path // .tool_input.noteb
 [[ "$file_path" != *.md ]] && exit 0
 [[ -f "$file_path" ]] || exit 0
 
+# Claude Code's own auto memory (~/.claude/projects/<project>/memory/*.md):
+# sync it into agent-memory right away instead of indexing it as an entity.
+if [[ "$file_path" == */.claude/projects/*/memory/*.md ]]; then
+  BRIDGE_MEMORY_PATH="$(dirname "$file_path")" \
+    "$BRIDGE_BIN" sync-memories --quiet >/dev/null 2>&1 || true
+  exit 0
+fi
+
 "$BRIDGE_BIN" entity index-file "$file_path" --quiet >/dev/null 2>&1 || true
 exit 0
