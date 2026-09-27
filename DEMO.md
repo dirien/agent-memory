@@ -38,10 +38,19 @@ sbx kit validate ./kit
 sbx settings set kit.allowedSources '["docker.io/","ghcr.io/dirien/","github.com/dirien/"]'
 sbx secret ls                    # the global `pulumi` secret must exist (ESC reads)
 
-set -a; . ./.mcp.env; set +a     # ELASTIC_KIBANA_HOST + ELASTIC_MCP_API_KEY
-sbx secret set-custom --host '*.kb.us-east-1.aws.elastic.cloud' \
-  --env ELASTIC_MCP_API_KEY --value "$ELASTIC_MCP_API_KEY"
+# The MCP key lives in ESC (mcp.apiKey); sbx resolves it on the host when needed,
+# the sandbox only sees a placeholder. sbx wants an absolute path for --command.
+E=dirien/agent-memory/elastic-cloud
+PULUMI_BIN="$(command -v pulumi)"
+sbx secret set-custom --host '*.kb.us-east-1.aws.elastic.cloud' --env ELASTIC_MCP_API_KEY \
+  --command "$PULUMI_BIN env get $E mcp.apiKey --value string --show-secrets | tr -d '\n'"
+ELASTIC_KIBANA_HOST="$(pulumi env get $E mcp.kibanaHost --value string)"
 ```
+
+If `sbx` rejects the `--command` check, store the value instead:
+`--value "$(pulumi env get $E mcp.apiKey --value string --show-secrets)"`.
+To put the key into ESC in the first place (after `pulumi up`):
+`scripts/pulumi.sh stack output mcp_api_key --show-secrets | tr -d '\n' | pulumi env set $E mcp.apiKey --secret -f -`.
 
 `.env` and `.mcp.env` already exist in the workspace (written by
 `scripts/write-env.sh`), and the Elasticsearch indices start empty.

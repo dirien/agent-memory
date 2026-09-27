@@ -80,10 +80,18 @@ only on the hosts they name). The Kibana host itself isn't secret; pass it at
 creation. On the host, from the repo root:
 
 ```bash
-set -a; . ./.mcp.env; set +a        # written by scripts/write-env.sh
-sbx secret set-custom --host '*.kb.us-east-1.aws.elastic.cloud' \
-  --env ELASTIC_MCP_API_KEY --value "$ELASTIC_MCP_API_KEY"
-sbx create --name <sandbox> --env ELASTIC_KIBANA_HOST="$ELASTIC_KIBANA_HOST" \
+E=<org>/agent-memory/elastic-cloud
+# once, after `pulumi up`: copy the key and host from the stack into ESC
+scripts/pulumi.sh stack output mcp_api_key --show-secrets | tr -d '\n' | \
+  pulumi env set $E mcp.apiKey --secret -f -
+pulumi env set $E mcp.kibanaHost "$(scripts/pulumi.sh stack output kibana_url | sed 's#^https://##')" --plaintext
+
+# sbx resolves the key on the host when needed (absolute path required for --command)
+PULUMI_BIN="$(command -v pulumi)"
+sbx secret set-custom --host '*.kb.us-east-1.aws.elastic.cloud' --env ELASTIC_MCP_API_KEY \
+  --command "$PULUMI_BIN env get $E mcp.apiKey --value string --show-secrets | tr -d '\n'"
+sbx create --name <sandbox> \
+  --env ELASTIC_KIBANA_HOST="$(pulumi env get $E mcp.kibanaHost --value string)" \
   --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 --kit ./kit claude .
 ```
 
