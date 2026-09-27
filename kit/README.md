@@ -48,7 +48,6 @@ local `./kit` paths are allowed by default.
 | Arg | Default | Purpose |
 |---|---|---|
 | `elastic_region` | `us-east-1.aws` | Region part of the project endpoints. Pulumi's `aws-us-east-1` becomes `us-east-1.aws`. |
-| `stack` | empty | Fully qualified stack for `scripts/write-env.sh` with `backend=cloud`. Empty means the stack selected in `infra/`. |
 | `backend` | `local` | State backend for `scripts/pulumi.sh`: `local` (`infra/.pulumi-state`) or `cloud` (Pulumi Cloud). See the known issue below. |
 
 Pass them with `--kit-arg elastic-memory.<arg>=<value>`.
@@ -67,6 +66,31 @@ Pass them with `--kit-arg elastic-memory.<arg>=<value>`.
 The project's own API key (the one `bridge` uses) is created by Pulumi and lands
 in the workspace's `.env` through `scripts/write-env.sh`. It is scoped to the
 agent-memory indices only.
+
+## MCP key through the proxy
+
+The `elastic-memory` MCP server in `.mcp.json` sends
+`Authorization: ApiKey ${ELASTIC_MCP_API_KEY}` to your project's Kibana. Keep
+the key on the host with a custom secret: the sandbox gets a placeholder in
+`ELASTIC_MCP_API_KEY`, and the proxy replaces the placeholder in the request
+headers for the matching hosts
+([`sbx secret set-custom`](https://docs.docker.com/reference/cli/sbx/secret/set-custom/),
+experimental; wildcard hosts are allowed there, while kit `credentials` inject
+only on the hosts they name). The Kibana host itself isn't secret; pass it at
+creation. On the host, from the repo root:
+
+```bash
+set -a; . ./.mcp.env; set +a        # written by scripts/write-env.sh
+sbx secret set-custom --host '*.kb.us-east-1.aws.elastic.cloud' \
+  --env ELASTIC_MCP_API_KEY --value "$ELASTIC_MCP_API_KEY"
+sbx create --name <sandbox> --env ELASTIC_KIBANA_HOST="$ELASTIC_KIBANA_HOST" \
+  --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 --kit ./kit claude .
+```
+
+Inside the sandbox `echo "$ELASTIC_MCP_API_KEY"` prints the placeholder, and
+`/mcp` shows `elastic-memory` connected. If you'd rather skip the proxy, pass
+both values with `sbx create --env-file .mcp.env ...`; the key then lives in the
+container's environment.
 
 ## Known issue: `pulumi up` and the proxy-managed Pulumi token
 

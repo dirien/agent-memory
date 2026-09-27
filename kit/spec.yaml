@@ -24,12 +24,6 @@ args:
       Region part of your project endpoints, <alias>.es.<elastic_region>.elastic.cloud
       (aws-us-east-1 in Pulumi config becomes us-east-1.aws here)
     pattern: '^[a-z0-9-]+\.(aws|gcp|azure)$'
-  stack:
-    default: ""
-    description: >-
-      Fully qualified Pulumi stack for scripts/write-env.sh
-      (e.g. myorg/agent-memory-infra/dev). Empty uses the stack selected in infra/.
-      Only used with backend=cloud.
   backend:
     default: local
     description: >-
@@ -84,7 +78,6 @@ credentials:
 
 environment:
   variables:
-    AGENT_MEMORY_STACK: "${{ kit.args.stack }}"
     AGENT_MEMORY_BACKEND: "${{ kit.args.backend }}"
     # Serverless round trips from the sandbox proxy can exceed the 5s default.
     BRIDGE_TIMEOUT: "10"
