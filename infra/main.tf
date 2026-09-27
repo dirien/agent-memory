@@ -4,11 +4,14 @@ terraform {
       source  = "elastic/ec"
       version = "0.13.1"
     }
-    # Pinned below 0.16.1: that release adds elasticsearch_query_ruleset, whose
-    # `_id` output the dynamic Terraform bridge can't map yet (pulumi install fails).
+    # 0.16.1+ adds elasticsearch_query_ruleset with a required `_id` attribute,
+    # which terraform-provider 1.4.0 rejects (pulumi/pulumi-terraform-provider#117).
+    # sdks/elasticstack/hcl.sdk.json pins terraform-provider 1.3.0, which still
+    # loads it; don't rerun `pulumi install` until the bridge is fixed, or it
+    # re-resolves to 1.4.0 and fails.
     elasticstack = {
       source  = "elastic/elasticstack"
-      version = "0.16.0"
+      version = "0.16.5"
     }
     # Native Pulumi package: writes the ESC environment the agents read.
     pulumiservice = {
