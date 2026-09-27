@@ -122,13 +122,13 @@ fallback/                 — offline queue; synced files go to .synced/
 
 ## Claude Code Hook Setup
 
-`apm install` deploys the hooks from `.apm/hooks/agent-memory.json` (SessionStart, PostToolUse, SessionEnd) into `.claude/settings.json`. Without APM, copy `hooks/settings.json.template`.
+`apm install -g --target claude <this clone>` installs the hooks from `.apm/hooks/agent-memory.json` (SessionStart, PostToolUse, SessionEnd), the skill and the MCP server at user scope. Without APM, copy `hooks/settings.json.template`.
 
 ## Infrastructure, APM and the sandbox kit
 
 - `infra/` is a Pulumi HCL program (`runtime: hcl`) for the Serverless project, indices, scoped API key and dashboard. Run it through `scripts/pulumi.sh` (`preview` before `up`); inside Docker Sandboxes `AGENT_MEMORY_BACKEND=local` keeps state in `infra/.pulumi-state`. `scripts/write-env.sh` turns the stack outputs into `.env`. `elastic/elasticstack` stays pinned to 0.16.0 (see `infra/README.md`).
-- Hooks and the `agent-memory` skill are APM primitives under `.apm/`. Edit `.apm/hooks/agent-memory.json` or `hooks/*.sh`, then run `apm install` to redeploy `.claude/`. Don't hand-edit `.claude/settings.json` or `.claude/hooks/`.
-- The `elastic-memory` MCP server (Kibana Agent Builder) is declared in `apm.yml`. Always run `env -u ELASTIC_MCP_API_KEY -u ELASTIC_KIBANA_HOST apm install`: when those variables are set (from `.mcp.env` or the sandbox), APM would write their values into the committed `.mcp.json`.
+- Hooks and the `agent-memory` skill are APM primitives under `.apm/`, installed only at user scope (`apm install -g`), in the demo sandboxes by the kit. Don't run a project-level `apm install` here and don't commit `.claude/settings.json`, `.claude/hooks/` or `.mcp.json`: the workspace is shared with the sandbox the demo is built in, which must stay free of these hooks.
+- The `elastic-memory` MCP server (Kibana Agent Builder) is declared in `apm.yml`. Run `env -u ELASTIC_MCP_API_KEY -u ELASTIC_KIBANA_HOST apm install -g ...`: when those variables are set (from `.mcp.env` or the sandbox), APM writes their values into `~/.claude.json` instead of keeping the placeholders.
 - `kit/spec.yaml` is a Docker Sandboxes mixin kit; `scripts/sbx-startup.sh` is its startup step. Validate on the host with `sbx kit validate ./kit`.
 - `bridge` must stay portable across macOS (BSD userland, bash from Homebrew) and Linux (GNU): no `sed -i`, no `md5`-only calls.
 

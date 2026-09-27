@@ -1,11 +1,14 @@
 # apm.yml — agent-memory as an APM package (https://github.com/microsoft/apm).
 #
-# In this repo:        apm install                      # wires the hooks + skill below into .claude/
-# In any other repo:   apm install dirien/agent-memory  # same hooks + skill, pointed at `bridge` on PATH
+# Install it into the Claude Code that should remember (user scope, every project):
+#   apm install -g --target claude <path-to-this-clone>   # or: dirien/agent-memory
+# The Docker Sandboxes kit does this at sandbox start (scripts/sbx-startup.sh).
+# The repo itself carries no project-level .claude/ config on purpose: the
+# workspace is shared with sandboxes that must not get the hooks.
 #
 # Local primitives under .apm/, discovered automatically:
-#   .apm/hooks/agent-memory.json      → SessionStart (sync + heartbeat), PostToolUse (index .md writes),
-#                                       SessionEnd (log + suspend tasks), merged into .claude/settings.json
+#   .apm/hooks/agent-memory.json      → SessionStart (sync + heartbeat), PostToolUse (index .md writes,
+#                                       sync auto-memory), SessionEnd (sync, log, suspend tasks)
 #   .apm/skills/agent-memory/SKILL.md → when to recall, remember, and hand off
 
 name: agent-memory

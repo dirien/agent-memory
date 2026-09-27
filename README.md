@@ -23,7 +23,7 @@ Recalling a stored memory costs a single search query. The alternative is loadin
 This fork of [jeffvestal/agent-memory](https://github.com/jeffvestal/agent-memory) adds:
 
 - **`infra/`**: a [Pulumi HCL](https://www.pulumi.com/docs/iac/languages-sdks/hcl/) program that creates the Elasticsearch Serverless project, the seven indices, a scoped API key and the Kibana dashboard.
-- **APM packaging** (`apm.yml`, `.apm/`): the Claude Code hooks and an `agent-memory` skill ship as an [APM](https://github.com/microsoft/apm) package, so `apm install` wires them instead of hand-edited `settings.json`.
+- **APM packaging** (`apm.yml`, `.apm/`): the Claude Code hooks and an `agent-memory` skill ship as an [APM](https://github.com/microsoft/apm) package, so `apm install -g` wires them into the agent that should remember, instead of hand-edited `settings.json`.
 - **`kit/`**: a [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) kit that runs all of it inside a Claude Code sandbox, with the Elastic Cloud key injected by the credential proxy.
 - Fixes so `bridge` runs on Linux (the sandbox) as well as macOS, and so synced auto-memories keep their body and type.
 
@@ -78,7 +78,7 @@ read -rs EC_KEY && printf '%s' "$EC_KEY" | \
 cd infra && pulumi stack init <org>/dev && pulumi up && cd ..
 scripts/write-env.sh                       # .env from the stack outputs
 ln -s "$PWD/bridge" ~/.local/bin/bridge    # or add this directory to PATH
-apm install                                # hooks + skill into .claude/
+apm install -g --target claude "$PWD"     # hooks, skill + MCP into ~/.claude
 bridge status
 ```
 
@@ -108,13 +108,14 @@ bridge recall "install"                                               # verify h
 
 ## Hook integration
 
-The hooks ship as an APM package. In this repo, `apm install` deploys them (and the `agent-memory` skill) into `.claude/`; the result is committed, so a fresh clone already has them. In any other project:
+The hooks, the `agent-memory` skill and the `elastic-memory` MCP server ship as an APM package. Install it into the Claude Code that should remember:
 
 ```bash
-apm install dirien/agent-memory   # hooks + skill; they call `bridge` from PATH
+apm install -g --target claude /path/to/agent-memory   # user scope: every project on this machine
+apm install dirien/agent-memory                         # or: project scope, inside one other project
 ```
 
-Without APM, copy `hooks/settings.json.template` into your project's `.claude/settings.json` and replace `REPLACE_WITH_AGENT_MEMORY_PATH` with the absolute path to your agent-memory clone.
+The repo itself has no project-level `.claude/` config on purpose: in Docker Sandboxes the workspace is shared, and only the sandboxes started with the kit should remember (the kit's startup step runs the `-g` install). Without APM, copy `hooks/settings.json.template` into a `settings.json` and replace `REPLACE_WITH_AGENT_MEMORY_PATH` with the absolute path to your agent-memory clone.
 
 | Hook | Trigger | What it does |
 |---|---|---|
@@ -126,20 +127,20 @@ Every hook exits 0: with no `.env` they stay silent, and when Elasticsearch is u
 
 ## MCP: query the memory from any agent
 
-Serverless Kibana ships an MCP server (Agent Builder) at `https://<kibana>/api/agent_builder/mcp`. The Pulumi stack creates a read-only key for it, and `apm.yml` declares it as the `elastic-memory` server in `.mcp.json` with `${ELASTIC_KIBANA_HOST}` / `${ELASTIC_MCP_API_KEY}` placeholders.
+Serverless Kibana ships an MCP server (Agent Builder) at `https://<kibana>/api/agent_builder/mcp`. The Pulumi stack creates a read-only key for it, and `apm.yml` declares it as the `elastic-memory` server with `${ELASTIC_KIBANA_HOST}` / `${ELASTIC_MCP_API_KEY}` placeholders; `apm install -g` puts it in `~/.claude.json` (user scope, so no per-project approval prompt).
 
 Claude Code expands those placeholders from its **process environment** (tested: values in `settings.json` `env` don't reach the expansion). `scripts/write-env.sh` writes them to the gitignored `.mcp.env`:
 
 ```bash
 set -a; . ./.mcp.env; set +a
-claude            # approve the elastic-memory server once, then check /mcp
+claude            # /mcp shows elastic-memory connected
 ```
 
 In Docker Sandboxes the proxy can hold the key instead, so the container only sees a placeholder: see [`kit/README.md`](kit/README.md#mcp-key-through-the-proxy).
 
 Useful tools: `platform_core_search`, `platform_core_execute_esql`, `platform_core_generate_esql`, `platform_core_list_indices`, `platform_core_get_index_mapping`. The key only sees the seven memory indices.
 
-Keep `ELASTIC_MCP_API_KEY` out of the shell that runs `apm install`: APM resolves placeholders it can see and would write the key into `.mcp.json`.
+Keep `ELASTIC_MCP_API_KEY` out of the shell that runs `apm install`: APM resolves placeholders it can see and would write the key into `~/.claude.json`.
 
 ## Configuration reference
 

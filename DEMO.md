@@ -46,7 +46,7 @@ each step checked in Elasticsearch from a third session:
   same queries run directly against Elasticsearch.
 
 Still unchecked: the kit startup step's own effects (the `bridge` symlink in
-`~/.local/bin`, its `apm install` run). The hooks find `bridge` through the
+`~/.local/bin`, its `apm install -g` run). The hooks find `bridge` through the
 project directory either way.
 
 ## 0. Before you start (host)
@@ -97,7 +97,7 @@ Smoke checks in the new session (prefix with `!` to run them in the shell):
 ```text
 ! bridge status                  # ES connectivity: online, 7 indices
 ! echo "$ELASTIC_MCP_API_KEY"     # a placeholder, not the key
-/mcp                             # approve elastic-memory; it should show connected
+/mcp                             # elastic-memory connected (user scope, no approval prompt)
 ```
 
 Then give Claude this prompt:

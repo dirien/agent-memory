@@ -3,7 +3,7 @@
 #
 #   .env      bridge CLI settings (the `dotenv` output)
 #   .mcp.env  ELASTIC_KIBANA_HOST + ELASTIC_MCP_API_KEY for the elastic-memory MCP
-#             server in .mcp.json. Claude Code expands those placeholders from its
+#             server (installed by `apm install -g`). Claude Code expands those placeholders from its
 #             process environment only (not from settings.json `env`), so load it
 #             before starting claude: `set -a; . ./.mcp.env; set +a; claude`,
 #             or `sbx create --env-file .mcp.env ...`.
@@ -44,7 +44,7 @@ mv "$ENV_FILE.tmp" "$ENV_FILE"
 echo "Wrote $ENV_FILE ($(grep -c '=' "$ENV_FILE") settings). Check it with: ./bridge status"
 
 # MCP: values for the ${ELASTIC_KIBANA_HOST} / ${ELASTIC_MCP_API_KEY}
-# placeholders in .mcp.json.
+# placeholders in the elastic-memory MCP server config.
 mcp_key="$(jq -r '.mcp_api_key // empty' <<< "$outputs")"
 kibana_host="$(jq -r '.kibana_url // empty' <<< "$outputs" | sed -E 's#^https?://##; s#/.*$##')"
 if [[ -n "$mcp_key" && -n "$kibana_host" ]]; then

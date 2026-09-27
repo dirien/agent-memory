@@ -40,7 +40,7 @@ local `./kit` paths are allowed by default.
 | `environment.variables` | `AGENT_MEMORY_BACKEND` and `AGENT_MEMORY_STACK` (from the args), `BRIDGE_TIMEOUT=10` |
 | `setup.install` | installs `jq`, `curl`, `openssl` when the image lacks them |
 | `setup.files` | records the workspace path (`${WORKDIR}`) for the startup step |
-| `setup.startup` | runs `scripts/sbx-startup.sh`: links `bridge` into `~/.local/bin`, runs `apm install` (hooks + skill), writes `.env` from the stack when it's missing |
+| `setup.startup` | runs `scripts/sbx-startup.sh`: links `bridge` into `~/.local/bin`, runs `apm install -g --target claude` (hooks, skill + MCP server into this sandbox's `~/.claude`), writes `.env` from the stack when it's missing |
 | `agentInstructions` | tells Claude to recall before re-deriving and to remember decisions |
 
 ## Arguments
@@ -69,7 +69,7 @@ agent-memory indices only.
 
 ## MCP key through the proxy
 
-The `elastic-memory` MCP server in `.mcp.json` sends
+The `elastic-memory` MCP server (installed at user scope by the startup step) sends
 `Authorization: ApiKey ${ELASTIC_MCP_API_KEY}` to your project's Kibana. Keep
 the key on the host with a custom secret: the sandbox gets a placeholder in
 `ELASTIC_MCP_API_KEY`, and the proxy replaces the placeholder in the request
