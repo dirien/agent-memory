@@ -1,0 +1,67 @@
+name: Publish kit
+
+# Validate and publish kit/ to GitHub Container Registry as an OCI artifact:
+# on kit changes on main (as :latest) and on version tags (as :vX.Y.Z). The
+# built-in GITHUB_TOKEN can push packages; no extra secret needed.
+on:
+  push:
+    branches: [main]
+    paths:
+      - kit/**
+      - scripts/push-kit.sh
+      - scripts/sbx-startup.sh
+      - .github/workflows/publish-kit.yaml
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      sbx_release:
+        description: "docker/sbx-releases tag to install (must support kit-spec v2)"
+        required: false
+        default: "latest"
+      tag:
+        description: "OCI tag to publish"
+        required: false
+        default: "latest"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish-kit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install sbx
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SBX_RELEASE: ${{ inputs.sbx_release || 'latest' }}
+        run: |
+          set -euo pipefail
+          asset='DockerSandboxes-linux-amd64-ubuntu2604.deb'
+          if [ "$SBX_RELEASE" = "latest" ]; then
+            gh release download --repo docker/sbx-releases --pattern "$asset" --output /tmp/sbx.deb
+          else
+            gh release download "$SBX_RELEASE" --repo docker/sbx-releases --pattern "$asset" --output /tmp/sbx.deb
+          fi
+          sudo apt-get update
+          sudo apt-get install -y /tmp/sbx.deb
+          sbx version
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push kit
+        env:
+          REGISTRY: ghcr.io/${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG="${{ github.ref_name }}" bash ./scripts/push-kit.sh
+          fi
+          TAG="${{ inputs.tag || 'latest' }}" bash ./scripts/push-kit.sh

@@ -4,11 +4,12 @@ name: elastic-memory
 displayName: Elastic memory for Claude Code
 description: >-
   Gives the Claude Code agent persistent memory in an Elasticsearch Serverless
-  project: egress to Elastic Cloud and your project's endpoints, the Elastic
-  Cloud API key injected by the credential proxy, the bridge CLI on PATH, and
-  the agent-memory hooks and skill wired in through APM. Stack it after the
-  infrastructure kit, which brings Pulumi and APM.
-version: "0.1.0"
+  project, in any workspace: fetches the agent-memory CLI at a pinned ref,
+  installs its hooks, skill and Elastic MCP server at user scope with APM, and
+  allows egress to Elastic Cloud and your project's endpoints. Settings come in
+  with `sbx create --env`, keys as proxy placeholders; no .env files. Stack it
+  after the infrastructure kit, which brings APM (and Pulumi).
+version: "0.2.0"
 sourceURL: https://github.com/dirien/agent-memory
 licenses:
   - Apache-2.0
@@ -27,17 +28,17 @@ args:
   backend:
     default: local
     description: >-
-      State backend for scripts/pulumi.sh. "local" keeps state in
-      infra/.pulumi-state because the credential proxy breaks Pulumi Cloud
-      updates (README: Known issue); "cloud" uses your Pulumi Cloud stack.
+      State backend for scripts/pulumi.sh when the workspace is an agent-memory
+      clone. "local" keeps state in infra/.pulumi-state because the credential
+      proxy breaks Pulumi Cloud updates (README: Known issue); "cloud" uses your
+      Pulumi Cloud stack.
     enum: [local, cloud]
   agent_memory_dir:
-    default: workspace
+    default: bundled
     description: >-
-      Where the agent-memory clone is mounted in the sandbox. "workspace" means
-      the primary workspace is the clone. To give memory to another project,
-      pass the clone's absolute path and mount it as a second workspace:
-      sbx create ... claude <project> <agent-memory-clone>
+      Which agent-memory copy to install. "bundled" is the one this kit fetches
+      at KIT_REF; "workspace" uses the primary workspace (an agent-memory clone
+      you're developing); an absolute path uses a clone you mounted there.
 
 # Egress allow-list. Serverless project hosts are <alias>-<id>.es.<region>.elastic.cloud,
 # one label deep, so the single-label wildcards below are enforced.
@@ -51,7 +52,8 @@ permissions:
       - "*.es.${{ kit.args.elastic_region }}.elastic.cloud"
       - "*.kb.${{ kit.args.elastic_region }}.elastic.cloud"
       # Pulumi service + the HCL plugin, and the ec / elasticstack providers
-      # (bridged from the OpenTofu registry, binaries served from GitHub)
+      # (bridged from the OpenTofu registry, binaries served from GitHub).
+      # codeload.github.com also serves the agent-memory tarball below.
       - api.pulumi.com
       - get.pulumi.com
       - registry.opentofu.org
@@ -67,10 +69,10 @@ permissions:
       - ports.ubuntu.com
       - registry.npmjs.org
 
-# Elastic Cloud API key for `pulumi up` in infra/. The value is bound on the host:
-#   sbx secret set -g elastic-cloud
-# The ec provider reads EC_API_KEY, which only holds the proxy-managed
-# placeholder in the container; the proxy injects `Authorization: ApiKey <key>`.
+# Elastic Cloud API key, only for `pulumi up` in an agent-memory workspace. The
+# value is bound on the host: `sbx secret set elastic-cloud`. The ec provider
+# reads EC_API_KEY, which only holds the proxy-managed placeholder in the
+# container; the proxy injects `Authorization: ApiKey <key>`.
 credentials:
   - service: elastic-cloud
     description: "Elastic Cloud API key (creates the Serverless project via Pulumi)"
@@ -102,9 +104,24 @@ setup:
         if [ -n "$missing" ]; then
           apt-get update -qq && apt-get install -y -qq $missing
         fi
+    - user: "1000"
+      description: "Fetch the agent-memory CLI, hooks and APM package at a pinned ref"
+      command: |
+        set -eu
+        KIT_REPO="dirien/agent-memory"
+        # Immutable ref to install. scripts/push-kit.sh rewrites it to the exact
+        # commit SHA when publishing the kit to GHCR.
+        KIT_REF="v0.2.0"
+        DIR="$HOME/.local/share/agent-memory"
+        if [ ! -x "$DIR/bridge" ]; then
+          mkdir -p "$DIR"
+          curl --proto '=https' --tlsv1.2 -fsSL --retry 3 --retry-delay 2 \
+            "https://codeload.github.com/$KIT_REPO/tar.gz/$KIT_REF" \
+            | tar -xz --strip-components=1 -C "$DIR"
+        fi
   files:
-    # Records where the workspace and the agent-memory clone are mounted, for
-    # the startup step below.
+    # Records the workspace path and which agent-memory copy to use, for the
+    # startup step below.
     - path: /home/agent/.config/elastic-memory/workspace
       content: "${WORKDIR}"
       mode: "0644"
@@ -113,18 +130,21 @@ setup:
       mode: "0644"
   startup:
     # Argv form (not shell-interpreted by the kit engine). Idempotent and non-fatal.
+    # Runs on every start: Docker reseeds ~/.claude at create time.
     - user: "1000"
-      description: "Put bridge on PATH, deploy the agent-memory hooks with APM, write .env from the Pulumi stack"
+      description: "Put bridge on PATH and install the agent-memory hooks, skill and MCP server at user scope"
       command:
         - bash
         - -lc
         - |
           cfg="$HOME/.config/elastic-memory"
-          ws="$(cat "$cfg/workspace" 2>/dev/null)"
           am="$(cat "$cfg/agent-memory-dir" 2>/dev/null)"
-          if [ -z "$am" ] || [ "$am" = "workspace" ]; then am="$ws"; fi
+          case "$am" in
+            ""|bundled) am="$HOME/.local/share/agent-memory" ;;
+            workspace)  am="$(cat "$cfg/workspace" 2>/dev/null)" ;;
+          esac
           f="$am/scripts/sbx-startup.sh"
-          if [ -f "$f" ]; then bash "$f"; else echo "[elastic-memory] no agent-memory clone at $am"; fi
+          if [ -f "$f" ]; then bash "$f"; else echo "[elastic-memory] no agent-memory copy at $am"; fi
           true
 
 agentInstructions:
@@ -132,20 +152,19 @@ agentInstructions:
     # Elastic memory
 
     This sandbox gives you persistent memory in an Elasticsearch Serverless
-    project through the `bridge` CLI (on PATH). Your context window resets
-    between sessions; the memory does not.
+    project through the `bridge` CLI (on PATH) and the `elastic-memory` MCP
+    server. Your context window resets between sessions; the memory does not.
 
     - Before re-deriving a decision or asking the user something they may have
-      told an earlier session, run `bridge recall "<question>"`.
+      told an earlier session, run `bridge recall "<question>"` or query the
+      `elastic-memory` MCP server.
     - Store decisions worth keeping: `bridge remember decision "<text>" --title "<title>"`.
     - `bridge status` shows connectivity and document counts; `bridge history`
       shows what earlier sessions did.
-    - Hooks already sync ~/.claude auto-memory at session start, index every
-      markdown file you write, and log the session end.
+    - Hooks already sync your auto-memory, index every markdown file you write,
+      and log the session end.
 
-    Infrastructure lives in `infra/` (Pulumi HCL, runtime: hcl). Run Pulumi
-    through `scripts/pulumi.sh` (`scripts/pulumi.sh preview`, `... up`), not
-    bare `pulumi`: with AGENT_MEMORY_BACKEND=local it keeps state in
-    infra/.pulumi-state and pulls EC_API_KEY and the state passphrase from ESC.
-    After `up`, run `scripts/write-env.sh` to write `.env`. Never print or
-    commit `.env`; it holds the project API key.
+    Configuration comes from the environment (BRIDGE_ES_URL, BRIDGE_AGENT_ID,
+    ELASTIC_KIBANA_HOST). BRIDGE_ES_API_KEY and ELASTIC_MCP_API_KEY hold proxy
+    placeholders (`sbx-cs-…`); the proxy swaps in the real keys on the way out.
+    Don't try to recover the real values, and don't write keys into files.

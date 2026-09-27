@@ -1,176 +1,118 @@
 # elastic-memory kit (Docker Sandboxes)
 
-A `schemaVersion: "2"`, `kind: mixin` kit that wires agent-memory into a Claude
-Code sandbox. Stack it after
+A `schemaVersion: "2"`, `kind: mixin` kit that gives Claude Code in a sandbox a
+persistent memory in Elasticsearch, **in any project**. It fetches the
+agent-memory CLI at a pinned ref, installs its hooks, skill and Elastic MCP
+server at user scope with APM, and allows egress to Elastic Cloud and your
+project's endpoints. Settings come in as environment variables, the keys as
+proxy placeholders: there are no `.env` files and no keys in the sandbox.
+
+Stack it after
 [`dirien/infrastructure-sandbox-kit`](https://github.com/dirien/infrastructure-sandbox-kit),
-which brings Pulumi, APM and the guardrail hooks:
+which brings APM (and Pulumi). Published as `ghcr.io/dirien/agent-memory-kit`.
+
+## Run it
+
+Prerequisites: the backend is deployed (`infra/`), which also creates the
+`<org>/agent-memory/runtime` ESC environment, and `pulumi` on the host is logged
+in to that org.
 
 ```bash
-# one-time, on the host
-sbx secret set pulumi              # Pulumi Cloud token (ESC reads go through it)
-pulumi env init <org>/agent-memory/elastic-cloud -f infra/esc/elastic-cloud.yaml
-# then set elastic.apiKey and state.passphrase in it (see ../infra/README.md)
+E=<org>/agent-memory/runtime
+PULUMI_BIN="$(command -v pulumi)"      # sbx wants an absolute path for --command
 
-# from the root of your agent-memory clone
-sbx run \
+# 1. Keys: the sandbox sees placeholders; sandboxd resolves the real values on the
+#    host from ESC when a request to the matching host needs them.
+sbx secret set-custom --host '*.es.us-east-1.aws.elastic.cloud' --env BRIDGE_ES_API_KEY \
+  --command "$PULUMI_BIN env get $E elastic.bridgeApiKey --value string --show-secrets | tr -d '\n'"
+sbx secret set-custom --host '*.kb.us-east-1.aws.elastic.cloud' --env ELASTIC_MCP_API_KEY \
+  --command "$PULUMI_BIN env get $E elastic.mcpApiKey --value string --show-secrets | tr -d '\n'"
+
+# 2. Settings (not secret) and the kits. Any project folder works.
+v() { pulumi env get "$E" "elastic.$1" --value string; }
+sbx create --name my-agent --skills=off \
+  --env BRIDGE_ES_URL="$(v esUrl)" \
+  --env BRIDGE_AGENT_ID="$(v agentId)" \
+  --env ELASTIC_KIBANA_HOST="$(v kibanaHost)" \
   --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 \
-  --kit ./kit \
-  claude .
+  --kit ghcr.io/dirien/agent-memory-kit:v0.2.0 \
+  claude /path/to/any/project
+sbx run --name my-agent
 ```
+
+Keep `sbx create` and `sbx run` separate: the kit's startup step installs the
+hooks while the sandbox starts, before Claude does. Remote kit sources need a
+one-time `sbx settings set kit.allowedSources '["docker.io/","ghcr.io/dirien/","github.com/dirien/"]'`.
 
 Inside the sandbox:
 
-```bash
-scripts/pulumi.sh up       # local state backend, EC_API_KEY from ESC
-scripts/write-env.sh       # .env for the bridge CLI
-bridge status
+```text
+! bridge status                   # online, 7 indices
+! echo "$BRIDGE_ES_API_KEY"        # sbx-cs-… placeholder, not the key
+/mcp                              # elastic-memory connected
 ```
-
-Kits apply in `--kit` order, so the infrastructure kit's Pulumi and APM are on
-PATH before this kit's startup step runs. Remote kit sources need a one-time
-`sbx settings set kit.allowedSources '["docker.io/","ghcr.io/dirien/","github.com/dirien/"]'`;
-local `./kit` paths are allowed by default.
 
 ## What it declares
 
 | Block | What it does |
 |---|---|
-| `permissions.network.allow` | `api.elastic-cloud.com`, your project's `*.es.<region>.elastic.cloud` and `*.kb.<region>.elastic.cloud`, the Pulumi service, the OpenTofu registry and GitHub (the `ec` and `elasticstack` providers), Ubuntu mirrors, npm |
-| `credentials` | service `elastic-cloud`: `EC_API_KEY` is proxy-managed, and the proxy injects `Authorization: ApiKey <key>` on `api.elastic-cloud.com` |
-| `environment.variables` | `AGENT_MEMORY_BACKEND` and `AGENT_MEMORY_STACK` (from the args), `BRIDGE_TIMEOUT=10` |
-| `setup.install` | installs `jq`, `curl`, `openssl` when the image lacks them |
-| `setup.files` | records the workspace path (`${WORKDIR}`) for the startup step |
-| `setup.startup` | runs `scripts/sbx-startup.sh`: links `bridge` into `~/.local/bin`, runs `apm install -g --target claude` (hooks, skill + MCP server into this sandbox's `~/.claude`), writes `.env` from the stack when it's missing |
-| `agentInstructions` | tells Claude to recall before re-deriving and to remember decisions |
+| `permissions.network.allow` | `api.elastic-cloud.com`, your project's `*.es.<region>.elastic.cloud` and `*.kb.<region>.elastic.cloud`, `codeload.github.com` (the agent-memory tarball), the Pulumi service, the OpenTofu registry and GitHub (providers), Ubuntu mirrors, npm |
+| `credentials` | service `elastic-cloud`: `EC_API_KEY` for `pulumi up` in an agent-memory workspace; the proxy injects `Authorization: ApiKey <key>` on `api.elastic-cloud.com` |
+| `environment.variables` | `AGENT_MEMORY_BACKEND` (from the `backend` arg), `BRIDGE_TIMEOUT=10` |
+| `setup.install` | installs `jq`, `curl`, `openssl` if missing; downloads agent-memory at `KIT_REF` into `~/.local/share/agent-memory` |
+| `setup.files` | records the workspace path and the `agent_memory_dir` choice |
+| `setup.startup` | runs `scripts/sbx-startup.sh` from that copy on every start: links `bridge` into `~/.local/bin` and runs `apm install -g --target claude`, so the hooks, the `agent-memory` skill and the `elastic-memory` MCP server land in this sandbox's `~/.claude` only |
+| `agentInstructions` | tells Claude to recall before re-deriving, and that the keys are placeholders |
+
+`KIT_REF` in the source spec names a release tag; `scripts/push-kit.sh` rewrites
+it to the exact commit SHA in the published artifact.
 
 ## Arguments
 
 | Arg | Default | Purpose |
 |---|---|---|
 | `elastic_region` | `us-east-1.aws` | Region part of the project endpoints. Pulumi's `aws-us-east-1` becomes `us-east-1.aws`. |
-| `backend` | `local` | State backend for `scripts/pulumi.sh`: `local` (`infra/.pulumi-state`) or `cloud` (Pulumi Cloud). See the known issue below. |
-| `agent_memory_dir` | `workspace` | Where the agent-memory clone is mounted. `workspace` means the primary workspace is the clone; for another project, pass the clone's absolute path and mount it as a second workspace (below). |
-
-## Give memory to any project
-
-The primary workspace can be any project. Mount your agent-memory clone next
-to it and point the kit at it; the startup step then links `bridge`, installs
-the hooks, skill and MCP server at user scope, and reads `.env` from the clone:
-
-```bash
-AM=/path/to/agent-memory                     # your clone, with .env written
-sbx create --name <sandbox> --skills=off \
-  --env ELASTIC_KIBANA_HOST="$(pulumi env get <org>/agent-memory/elastic-cloud mcp.kibanaHost --value string)" \
-  --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 --kit "$AM/kit" \
-  --kit-arg elastic-memory.agent_memory_dir="$AM" \
-  claude /path/to/your/project "$AM"
-sbx run --name <sandbox>
-```
-
-The clone must be mounted read-write: `bridge` keeps its sync state and offline
-queue next to itself.
+| `agent_memory_dir` | `bundled` | `bundled` installs the copy fetched at `KIT_REF`. `workspace` uses the primary workspace (an agent-memory clone you're developing). An absolute path uses a clone mounted there as an extra workspace. |
+| `backend` | `local` | State backend for `scripts/pulumi.sh` when the workspace is an agent-memory clone: `local` (`infra/.pulumi-state`) or `cloud`. See the known issue below. |
 
 Pass them with `--kit-arg elastic-memory.<arg>=<value>`.
 
-## The credential, two ways
+## Why placeholders, not kit credentials
 
-`pulumi up` needs `EC_API_KEY`. Pick one:
+Kit `credentials` (like the `elastic-cloud` one above) inject a header on the
+hosts they name, overwriting whatever the request carried. `sbx secret
+set-custom` works differently: the sandbox gets a placeholder in the variable,
+and the proxy replaces only that placeholder in the request headers, for any
+host matching the pattern (wildcards allowed).
+([reference](https://docs.docker.com/reference/cli/sbx/secret/set-custom/), experimental.)
 
-- **Pulumi ESC**: store it in the `agent-memory/elastic-cloud` environment
-  ([template](../infra/esc/elastic-cloud.yaml)). This also works outside a
-  sandbox, and the local backend needs the environment for its passphrase anyway.
-- **Sandbox proxy**: `sbx secret set elastic-cloud`. The proxy sets
-  `Authorization: ApiKey <key>` on every `api.elastic-cloud.com` request, so it
-  wins even if ESC still holds the placeholder. The key never enters the container.
-
-The project's own API key (the one `bridge` uses) is created by Pulumi and lands
-in the workspace's `.env` through `scripts/write-env.sh`. It is scoped to the
-agent-memory indices only.
-
-## MCP key through the proxy
-
-The `elastic-memory` MCP server (installed at user scope by the startup step) sends
-`Authorization: ApiKey ${ELASTIC_MCP_API_KEY}` to your project's Kibana. Keep
-the key on the host with a custom secret: the sandbox gets a placeholder in
-`ELASTIC_MCP_API_KEY`, and the proxy replaces the placeholder in the request
-headers for the matching hosts
-([`sbx secret set-custom`](https://docs.docker.com/reference/cli/sbx/secret/set-custom/),
-experimental; wildcard hosts are allowed there, while kit `credentials` inject
-only on the hosts they name). The Kibana host itself isn't secret; pass it at
-creation. On the host, from the repo root:
-
-```bash
-E=<org>/agent-memory/elastic-cloud
-# once, after `pulumi up`: copy the key and host from the stack into ESC
-scripts/pulumi.sh stack output mcp_api_key --show-secrets | tr -d '\n' | \
-  pulumi env set $E mcp.apiKey --secret -f -
-pulumi env set $E mcp.kibanaHost "$(scripts/pulumi.sh stack output kibana_url | sed 's#^https://##')" --plaintext
-
-# sbx resolves the key on the host when needed (absolute path required for --command)
-PULUMI_BIN="$(command -v pulumi)"
-sbx secret set-custom --host '*.kb.us-east-1.aws.elastic.cloud' --env ELASTIC_MCP_API_KEY \
-  --command "$PULUMI_BIN env get $E mcp.apiKey --value string --show-secrets | tr -d '\n'"
-sbx create --name <sandbox> \
-  --env ELASTIC_KIBANA_HOST="$(pulumi env get $E mcp.kibanaHost --value string)" \
-  --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 --kit ./kit claude .
-```
-
-Inside the sandbox `echo "$ELASTIC_MCP_API_KEY"` prints the placeholder, and
-`/mcp` shows `elastic-memory` connected.
-
-Verified on 2026-09-27: a request carrying only the placeholder reached the MCP
-endpoint with the real key (sandboxd replayed the `pulumi env get` command), and
-a request with any other `ApiKey` value got `401`. Unlike kit `credentials`
-injection, the custom secret replaces its placeholder and leaves other
-`Authorization` values alone, which is also what Pulumi's `update-token` calls
-need (see the known issue below; not yet tested for Pulumi). If you'd rather skip the proxy, pass
-both values with `sbx create --env-file .mcp.env ...`; the key then lives in the
-container's environment.
+Verified on 2026-09-27 for the MCP key: a request carrying only the placeholder
+reached Kibana with the real key (sandboxd replayed the `pulumi env get`
+command), a request with any other `ApiKey` value got `401`, and after rotating
+the key in Pulumi the placeholder kept working without touching the sbx secret.
 
 ## Known issue: `pulumi up` and the proxy-managed Pulumi token
 
-The credential proxy sets `Authorization: token <PAT>` on every request to
-`api.pulumi.com`, whatever the CLI sent. Read-only commands (`whoami`,
-`preview`'s plan, `pulumi env`) are fine, but an update authenticates its
-event, checkpoint and `complete` calls with a per-update `update-token`, and
-those come back `401`. `pulumi up` then fails with *"this command requires
-logging in"* after it has already changed cloud resources.
+This only matters when you run the Pulumi program inside a sandbox. The
+infrastructure kit's `pulumi` credential sets `Authorization: token <PAT>` on
+every request to `api.pulumi.com`, whatever the CLI sent. Read-only commands
+work, but an update authenticates its event, checkpoint and `complete` calls
+with a per-update `update-token`, and those come back `401`. `pulumi up` then
+fails with *"this command requires logging in"* after it has already changed
+cloud resources.
 
-That's why the kit defaults to `backend=local`: `scripts/pulumi.sh` keeps the
-state in `infra/.pulumi-state` (stack `local`) and wraps the run in
-`pulumi env run`, which only *reads* ESC, and reads work through the proxy.
-ESC supplies `EC_API_KEY` and `PULUMI_CONFIG_PASSPHRASE`
-(see [`../infra/esc/elastic-cloud.yaml`](../infra/esc/elastic-cloud.yaml)).
+So `scripts/pulumi.sh` defaults to a local state backend in a sandbox
+(`backend=local`): state in `infra/.pulumi-state`, and the run wrapped in
+`pulumi env run`, which only *reads* ESC. A `set-custom` placeholder for the
+Pulumi token would likely avoid the overwrite; that's not tested yet.
 
-```bash
-scripts/pulumi.sh preview
-scripts/pulumi.sh up
-scripts/write-env.sh
-```
+## Validate and publish
 
-To keep state in Pulumi Cloud instead (`--kit-arg elastic-memory.backend=cloud`),
-the sandbox needs a real token and no proxy binding for `pulumi`. A global
-secret can't be disabled for one sandbox, so move the others to scoped secrets
-before removing the global one (on the host):
-
-```bash
-printf '%s\n' "$PULUMI_ACCESS_TOKEN" | sbx secret set pulumi --sandbox <each-other-sandbox>
-sbx secret rm pulumi
-sbx exec -d <this-sandbox> bash -c \
-  "printf 'export PULUMI_ACCESS_TOKEN=%s\n' \"$PULUMI_ACCESS_TOKEN\" >> /etc/sandbox-persistent.sh"
-```
-
-Then a bogus token must be rejected from inside the sandbox:
-
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' -H 'Authorization: token bogus' https://api.pulumi.com/api/user   # 401
-```
-
-## Validate
-
-`sbx` is a host tool, so validate on the host:
+`.github/workflows/publish-kit.yaml` installs `sbx`, runs `sbx kit validate`
+and `sbx kit push` on every kit change on `main` (`:latest`) and on `v*` tags.
+Locally, with `sbx` on the host:
 
 ```bash
 sbx kit validate ./kit
-sbx kit inspect ./kit --json
+TAG=v0.2.0 scripts/push-kit.sh
 ```
