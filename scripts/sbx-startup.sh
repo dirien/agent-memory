@@ -22,6 +22,20 @@ if [[ -x "$ROOT/bridge" ]]; then
 fi
 
 if command -v apm >/dev/null 2>&1 && [[ -f "$ROOT/apm.yml" ]]; then
+  # One agent-memory install at a time. APM keys user-scope installs by source
+  # path, so the kit's bundled copy and a workspace clone would both stay
+  # installed and every hook would fire twice. Remove any other agent-memory
+  # copy (a local path in the user manifest with this script in it) first.
+  manifest="$HOME/.apm/apm.yml"
+  if [[ -f "$manifest" ]]; then
+    while IFS= read -r dep; do
+      [[ "$dep" == "$ROOT" || ! -f "$dep/scripts/sbx-startup.sh" ]] && continue
+      (cd "$HOME" && apm uninstall -g "$dep" </dev/null >/dev/null 2>&1) \
+        && log "removed the agent-memory install from $dep" \
+        || log "could not remove the agent-memory install from $dep"
+    done < <(sed -n 's|^[[:space:]]*-[[:space:]]*\(/.*\)$|\1|p' "$manifest")
+  fi
+
   # User scope, Claude only. Unset the MCP values so APM keeps the ${...}
   # placeholders for Claude Code to expand at runtime. Runs from $HOME so no
   # project-level files land in the workspace.
