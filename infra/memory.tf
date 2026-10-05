@@ -1,9 +1,12 @@
-# The seven indices the bridge CLI writes to. Field sets mirror what lib/*.sh
-# indexes, so Pulumi owns the whole schema instead of dynamic mapping.
+# The seven indices the bridge CLI writes to, plus the curation workflow's
+# decision log. Field sets mirror what lib/*.sh and curation.tf index, so
+# Pulumi owns the whole schema instead of dynamic mapping.
 locals {
   keyword  = { type = "keyword" }
   text     = { type = "text" }
   date     = { type = "date" }
+  boolean  = { type = "boolean" }
+  float    = { type = "float" }
   text_kw  = { type = "text", fields = { keyword = { type = "keyword" } } }
   semantic = { type = "semantic_text", inference_id = var.embedding_inference_id }
 
@@ -23,6 +26,28 @@ locals {
       supersedes       = local.keyword
       created_at       = local.date
       updated_at       = local.date
+      # Set by the memory-curation workflow (curation.tf)
+      status        = local.keyword
+      superseded_by = local.keyword
+      superseded_at = local.date
+      curated_at    = local.date
+      needs_review  = local.boolean
+      review_reason = local.keyword
+      review_with   = local.keyword
+      duplicate_of  = local.keyword
+      subsumed_by   = local.keyword
+    }
+
+    # One document per (new memory, older neighbour) pair the curation workflow judged:
+    # Jev's raw votes, so thresholds can be tuned and decisions audited in Kibana.
+    "agent-curation" = {
+      execution_id    = local.keyword
+      at              = local.date
+      new_id          = local.keyword
+      candidate_id    = local.keyword
+      candidate_score = local.float
+      model           = local.keyword
+      answers         = { type = "object" }
     }
 
     "agent-messages" = {
