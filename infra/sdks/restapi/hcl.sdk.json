@@ -1,0 +1,14 @@
+{
+  "Name": "terraform-provider",
+  "Kind": "resource",
+  "Version": "1.4.0",
+  "PluginDownloadURL": "",
+  "Checksums": null,
+  "Parameterization": {
+    "Name": "restapi",
+    "Version": "3.0.0",
+    "Value": "eyJyZW1vdGUiOnsidXJsIjoicmVnaXN0cnkub3BlbnRvZnUub3JnL21hc3RlcmNhcmQvcmVzdGFwaSIsInZlcnNpb24iOiIzLjAuMCJ9fQ=="
+  },
+  "ExtensionParameterization": null,
+  "source": "registry.opentofu.org/mastercard/restapi"
+}

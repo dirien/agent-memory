@@ -43,3 +43,10 @@ variable "embedding_inference_id" {
   type        = string
   default     = ".jina-embeddings-v5-text-small"
 }
+
+variable "typesafe_api_key" {
+  description = "TypeSafe Jev API key for the memory-curation workflow. Empty (the default) skips the Jev connector and the workflow."
+  type        = string
+  default     = ""
+  sensitive   = true
+}

@@ -13,6 +13,12 @@ terraform {
       source  = "elastic/elasticstack"
       version = "0.16.5"
     }
+    # Generic REST provider for the one Kibana object elasticstack can't create
+    # yet: the .http connector Workflows need (see curation.tf).
+    restapi = {
+      source  = "Mastercard/restapi"
+      version = "3.0.0"
+    }
     # Native Pulumi package: writes the ESC environment the agents read.
     pulumiservice = {
       source  = "pulumi/pulumiservice"
@@ -56,3 +62,16 @@ provider "elasticstack" {
   }
 }
 # #endregion provider
+
+# Kibana's REST API, same admin credentials as above, for objects the
+# elasticstack provider doesn't cover (curation.tf).
+provider "restapi" {
+  uri                  = ec_elasticsearch_project.memory.endpoints.kibana
+  username             = ec_elasticsearch_project.memory.credentials.username
+  password             = ec_elasticsearch_project.memory.credentials.password
+  write_returns_object = true
+  headers = {
+    "kbn-xsrf"     = "true"
+    "Content-Type" = "application/json"
+  }
+}
