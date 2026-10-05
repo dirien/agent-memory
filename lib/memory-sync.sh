@@ -132,14 +132,21 @@ memory_sync() {
         content_semantic: $content,
         tags: ["auto-memory"],
         source: $source,
-        created_at: $now,
         updated_at: $now,
         access_scope: $scope
       }')"
 
+    # Update, don't replace: an edited file keeps the memory's created_at and
+    # whatever the curation workflow set (status, superseded_by, ...). A full
+    # PUT dropped both, so a superseded note came back and, with a fresh
+    # created_at, looked like the newest memory. New files get created_at.
+    local body
+    body="$(jq -n --argjson doc "$doc" --arg now "$now" \
+      '{doc: $doc, upsert: ($doc + {created_at: $now})}')"
+
     local result
-    result="$(es_index "$IDX_MEMORY" "$mem_id" "$doc" 2>/dev/null)"
-    if echo "$result" | jq -e '.result == "created" or .result == "updated"' > /dev/null 2>&1; then
+    result="$(es_request POST "/${IDX_MEMORY}/_update/${mem_id}" "$body" 2>/dev/null)"
+    if echo "$result" | jq -e '.result == "created" or .result == "updated" or .result == "noop"' > /dev/null 2>&1; then
       synced=$((synced + 1))
       # Portable replace of this file's hash line (BSD and GNU sed disagree on -i)
       { grep -v "^${filename}:" "$hash_file" || true; echo "${filename}:${current_hash}"; } > "$hash_file.tmp"
