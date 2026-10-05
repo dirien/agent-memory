@@ -25,6 +25,7 @@ terraform {
 # Docker Sandboxes credential proxy (see kit/spec.yaml).
 provider "ec" {}
 
+# #region project
 resource "ec_elasticsearch_project" "memory" {
   name          = var.project_name
   region_id     = var.region
@@ -37,9 +38,11 @@ resource "ec_elasticsearch_project" "memory" {
     }
   }
 }
+# #endregion project
 
 # Everything inside the project (indices, API key, dashboard) talks to its
 # endpoints with the admin credentials the project returns on create.
+# #region provider
 provider "elasticstack" {
   elasticsearch {
     endpoints = [ec_elasticsearch_project.memory.endpoints.elasticsearch]
@@ -52,3 +55,4 @@ provider "elasticstack" {
     password  = ec_elasticsearch_project.memory.credentials.password
   }
 }
+# #endregion provider
