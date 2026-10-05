@@ -1,6 +1,6 @@
 <!-- FOR AI AGENTS - Human readability is a side effect, not a goal -->
 <!-- Managed by agent: keep sections and order; edit content, not structure -->
-<!-- Last updated: 2026-09-27 | Last verified: 2026-09-27 -->
+<!-- Last updated: 2026-09-30 | Last verified: 2026-09-30 -->
 
 # AGENTS.md: slides/
 
@@ -35,7 +35,7 @@ start, delete `node_modules` and run the install again.
 ## Structure
 ```
 slides.md          -> the deck (one file)
-style.css          -> overlay on @pulumi/slidev-theme: +40% font size, h1 pinned top, .big-code, .mem-card/.mem-caption, .meme-slide/.meme-frame, .soul-slide
+style.css          -> overlay on @pulumi/slidev-theme: +40% font size, h1 pinned top, .big-code/.code-lg/.code-xl, .mem-card/.mem-caption, .meme-slide/.meme-frame, .soul-slide; story slides: .term-grid, .stat, .takeaway, .quote-card, .timeline, .cmp, .why-grid, .hcl-grid, .memento
 snippets/soul.md   -> the SOUL.md intro slide content (reused from the GPU talk)
 snippets/infra     -> symlink to ../../infra; Slidev refuses snippet paths outside slides/, so import infra code as <<< @/snippets/infra/<file>.tf hcl
 public/fonts/      -> Inter + Monaspace Neon
@@ -52,13 +52,14 @@ Reference: `dirien/stop-wasting-gpus-how-we-built-a-golden-path-for-gpu-sharing-
 - Speaker notes on every slide (`<!-- ... -->`): timing first (`~10s.`), what to say and when to pause, then `Fact-check:` / `Sources:` lines.
 - Close: `Q&A`, `Thanks.`, `Resources` (contact cards + QR codes).
 
-## Draft status (slides.md is behind the code)
-Written before the demo worked; these parts are now wrong:
-- "Docker Sandboxes: the key never enters the box": shows a kit `credentials` block. Keys now come from `sbx secret set-custom` placeholders resolved from ESC (`../kit/README.md`, "Why placeholders").
-- "Hooks are a package now": `apm install dirien/agent-memory`. Now the kit runs `apm install -g` at user scope; the repo has no project-level hooks.
-- Demo slide notes: `scripts/write-env.sh` no longer exists (no `.env`; `infra/esc.tf` writes the runtime ESC env). The verified demo script is `../DEMO.md`.
-- TODOs: meme choice (slide 4). The `_id` slide still says "pinned 0.16.0"; the fix is now terraform-provider 1.3.0 with elasticstack 0.16.5, and the upstream issue is pulumi/pulumi-terraform-provider#117.
+## Draft status
+Story arc (2026-09-30): Friday/Monday. The opening shows Monday failing, the demo replays it working. Acts: amnesia → three fixes everyone tries (keep the session, CLAUDE.md, auto memory) → second brains and Karpathy's LLM wiki → "Memory is a search problem" → where each memory lives, agent-memory, ES|QL recall, why Elasticsearch (reason → benefit), when you don't need it → Pulumi, sandbox, hooks → demo → what broke, wrong memories spread, close. Don't cite third-party YouTube creators on slides.
+Open items:
+- Slide 3 (Friday/Monday) replies are reconstructed; replace with real screenshots from a sandbox without the kit, or the owner's own story.
+- Slides 5-7: the Memento still (`public/memento-leonard.jpg`, from srcdn.com) with our Polaroid overlaid; overlay coordinates in `style.css` (`.memento__*`) are measured on that 1400x700 image, so re-measure if you swap it.
+- Check ES|QL `DECAY`'s default function (linear vs exp) before calling it a forgetting curve.
 - Resources QR codes load from `api.qrserver.com` at render time; the demo constraint says pre-render them as PNGs into `public/`.
+- `infra/main.tf` carries `# #region project` / `# #region provider` markers for the HCL slide; keep them when editing that file.
 
 ## Verified story material (use these, don't invent numbers)
 | Beat | Fact | Evidence |

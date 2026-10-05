@@ -254,3 +254,87 @@ html {
   height: 100%;
   object-fit: contain;
 }
+
+/* ── Story slides (Friday/Monday arc) ─────────────────────────────── */
+
+/* Terminal cards: a caption above a code block */
+.term-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+.term-grid pre, .term-grid .shiki { font-size: 1.2rem !important; line-height: 1.55 !important; }
+.term-grid .mem-caption { margin-bottom: 0.9rem; }
+
+/* One big number with its caption */
+.stat { font-size: 9rem; font-weight: 600; letter-spacing: -0.05em; line-height: 1; color: var(--p-primary); }
+.stat-caption { font-size: 1.8rem !important; line-height: 1.35 !important; max-width: 62rem; margin-top: 1.2rem !important; }
+.stat-source { font-size: 1.05rem !important; color: var(--p-fg-muted) !important; margin-top: 1rem !important; }
+
+/* The primary-coloured takeaway line at the bottom of a content slide */
+.takeaway { margin-top: 2.2rem !important; font-size: 2rem !important; line-height: 1.3 !important; font-weight: 600; color: var(--p-primary) !important; text-wrap: balance; }
+
+/* Quote cards */
+.quote-card { border-left: 4px solid var(--p-primary); padding: 1.2rem 1.6rem; background: var(--p-bg-elevated); border-radius: 8px; }
+.quote-card p { font-size: 1.75rem !important; line-height: 1.35 !important; margin: 0 !important; }
+.quote-card p.quote-by { font-size: 1.1rem !important; color: var(--p-fg-muted) !important; margin-top: 0.9rem !important; }
+
+/* Timeline: four steps in a row */
+.timeline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.2rem; }
+.timeline .year { font-family: var(--slidev-font-mono); color: var(--p-primary); font-size: 2.1rem; font-weight: 700; line-height: 1; }
+.timeline p { font-size: 1.4rem !important; line-height: 1.35 !important; margin: 0.8rem 0 0 !important; }
+
+/* Comparison table: where each memory lives */
+.cmp { width: 100%; border-collapse: collapse; }
+.cmp th, .cmp td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--p-border); text-align: left; vertical-align: top; font-size: 1.5rem; line-height: 1.3; }
+.cmp th { font-family: var(--slidev-font-mono); font-size: 1.15rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--p-fg-muted); }
+.cmp td:first-child { color: var(--p-fg-muted); white-space: nowrap; }
+.cmp .cmp-es { color: var(--p-primary); font-weight: 600; }
+
+/* Reason → benefit cards */
+.why-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem; }
+.why-grid p { font-size: 1.3rem !important; line-height: 1.35 !important; margin: 0.7rem 0 0 !important; }
+.why-grid p.why-benefit { color: var(--p-primary) !important; font-weight: 600; }
+
+/* Code that is the whole slide: bigger than .big-code */
+.code-xl pre, .code-xl .shiki, .code-xl pre.shiki, .code-xl code { font-size: 1.4rem !important; line-height: 1.55 !important; }
+
+/* HCL slide: two columns, the wide provider block on the right */
+.hcl-grid { display: grid; grid-template-columns: 2fr 3fr; gap: 2rem; }
+.hcl-grid pre, .hcl-grid .shiki, .hcl-grid code { font-size: 0.95rem !important; line-height: 1.5 !important; }
+.hcl-grid pre + pre, .hcl-grid .shiki + .shiki { margin-top: 1.2rem; }
+.code-lg pre, .code-lg .shiki, .code-lg pre.shiki, .code-lg code { font-size: 1.25rem !important; line-height: 1.55 !important; }
+
+/* ── Memento slides: our Polaroid inside the one Leonard holds up ──
+ * The scene keeps the still's 2:1 ratio at full slide height, so it covers
+ * the 16:9 slide (sides cropped) and the overlays stay pinned in % of the
+ * image. Coordinates are measured on public/memento-leonard.jpg (1400x700). */
+@font-face {
+  font-family: "Permanent Marker";
+  src: url("/fonts/PermanentMarker-Regular.ttf") format("truetype");
+  font-display: block;
+}
+.memento { overflow: hidden; }
+.memento__scene { position: relative; height: 100%; aspect-ratio: 2 / 1; flex: none; }
+.memento__scene img { display: block; width: 100%; height: 100%; object-fit: fill; }
+.memento__photo,
+.memento__caption {
+  position: absolute;
+  transform: rotate(2.5deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.memento__photo {
+  left: 24.9%; top: 10.2%; width: 24.3%; height: 51.8%;
+  background: radial-gradient(ellipse at 45% 40%, #4a4740 0%, #2c2a26 70%, #1f1d1a 100%);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.55);
+  font-family: var(--slidev-font-mono);
+  font-size: 2.6rem;
+  color: #efe8d6;
+  filter: blur(0.3px) sepia(0.25);
+}
+.memento__caption {
+  left: 22.6%; top: 63.4%; width: 26.4%; height: 11.6%;
+  font-family: "Permanent Marker", "Marker Felt", cursive;
+  font-size: 2.05rem;
+  line-height: 1.05;
+  color: #1b1b1f;
+}
