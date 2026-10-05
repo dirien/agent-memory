@@ -132,6 +132,18 @@ mem_recall() {
       ]}}
     ]')"
 
+  # Hide retired memories: superseded by the curation workflow or `forget`
+  # (status), by `forget` before it set status (type), and later copies of an
+  # existing memory (duplicate_of). A term or exists on a field the index
+  # doesn't map matches nothing, so this works with and without the curation
+  # mapping. Hybrid recall passes it as the ES|QL request filter for the same reason.
+  local not_retired='{"bool": {"must_not": [
+    {"term": {"status": "superseded"}},
+    {"term": {"type": "superseded"}},
+    {"exists": {"field": "duplicate_of"}}
+  ]}}'
+  filter_clauses="$(echo "$filter_clauses" | jq --argjson r "$not_retired" '. + [$r]')"
+
   if [[ -n "$type_filter" ]]; then
     filter_clauses="$(echo "$filter_clauses" | jq --arg t "$type_filter" '. + [{"term": {"type": $t}}]')"
   fi
@@ -204,7 +216,7 @@ ESQL
   local result count
 
   if [[ "$mode" == "hybrid" ]]; then
-    result="$(es_request POST "/_query" "{\"query\": $(jq -Rs '.' <<< "$esql_query")}")"
+    result="$(es_request POST "/_query" "$(jq -n --arg q "$esql_query" --argjson f "$not_retired" '{query: $q, filter: $f}')")"
     if echo "$result" | jq -e '.error' > /dev/null 2>&1; then
       echo "ES|QL error: $(echo "$result" | jq -r '.error.reason // .error.type')" >&2
       return 1
@@ -244,13 +256,13 @@ mem_forget() {
     esac
   done
 
+  # Same fields the curation workflow sets; `type` stays the memory's kind.
   local now
   now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  local update_body="{\"type\": \"superseded\", \"updated_at\": \"$now\""
-  if [[ -n "$superseded_by" ]]; then
-    update_body+=", \"supersedes\": \"$superseded_by\""
-  fi
-  update_body+="}"
+  local update_body
+  update_body="$(jq -n --arg now "$now" --arg by "$superseded_by" \
+    '{status: "superseded", superseded_at: $now, updated_at: $now}
+     + (if $by != "" then {superseded_by: $by} else {} end)')"
 
   local result
   result="$(es_update "$IDX_MEMORY" "$mem_id" "$update_body")"
