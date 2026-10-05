@@ -48,6 +48,9 @@ locals {
       candidate_score = local.float
       model           = local.keyword
       answers         = { type = "object" }
+      # superseded | review | duplicate | candidate_subsumed | new_subsumed | none
+      outcome       = local.keyword
+      review_reason = local.keyword
     }
 
     "agent-messages" = {

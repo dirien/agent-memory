@@ -1,7 +1,8 @@
 # Memory curation: deployed by infra/curation.tf (connector id filled in there).
 # Every minute: find memories without curated_at, search their 3 nearest OLDER
-# neighbours (semantic), ask Jev 10 yes/no questions per pair, log the votes to
-# agent-curation, and let Painless decide. Jev never picks the direction: the
+# neighbours (semantic) and ask Jev 10 yes/no questions per pair. One Painless
+# rule (step `decide`) turns the votes into an outcome, logged with the votes in
+# agent-curation; two updates apply it. Jev never picks the direction: the
 # neighbour search only returns older notes.
 #
 # Question text adapted from jev-mem (MIT, Copyright (c) 2026 Daniel Illescas
@@ -71,19 +72,52 @@ steps:
               path: /v1/systemone
               method: POST
               body: {"model": "jev-1.13.0", "state": {"new_memory": {"content": "{{ steps.new_doc.output._source.content }}"}, "candidates": [{"content": "{{ foreach.item._source.content }}"}]}, "questions": {"same_question": {"type": "noul", "instructions": "Do `new_memory.content` and `candidates[0].content` both answer the same specific question about the same thing, such as which tool, database, folder name, owner, version, limit, schedule or rule applies? true: both give an answer to one shared specific question. false: they are about different things or different aspects of the same thing."}, "different_answer": {"type": "noul", "instructions": "Do `new_memory.content` and `candidates[0].content` give different answers about the same thing (a different value, name, owner, number, tool, location or rule)? true: at least one shared detail has a different value. false: every shared detail agrees, or they share no detail."}, "outdated": {"type": "noul", "instructions": "Does one of `new_memory.content` and `candidates[0].content` show that a claim in the other is outdated or no longer true, for example a changed value, name, tool, location, owner or rule? Either one may be the newer account. true: both cannot be current at the same time. false: both can be true at the same time."}, "new_reports_change": {"type": "noul", "instructions": "Does `new_memory.content` report that something stated in `candidates[0].content` has since changed: it was renamed, replaced, moved, removed, reassigned or given a new value? true: `new_memory.content` describes the change or the new state that replaced what `candidates[0].content` says. false: `new_memory.content` adds detail, agrees, or is about something else."}, "candidate_reports_change": {"type": "noul", "instructions": "Does `candidates[0].content` report that something stated in `new_memory.content` has since changed: it was renamed, replaced, moved, removed, reassigned or given a new value? true: `candidates[0].content` describes the change or the new state that replaced what `new_memory.content` says. false: `candidates[0].content` adds detail, agrees, or is about something else."}, "new_covers": {"type": "noul", "instructions": "Is every fact stated in `candidates[0].content` also stated in `new_memory.content`, possibly in other words? true: `candidates[0].content` adds nothing that `new_memory.content` lacks. false: `candidates[0].content` contains at least one fact that `new_memory.content` does not state."}, "candidate_covers": {"type": "noul", "instructions": "Is every fact stated in `new_memory.content` also stated in `candidates[0].content`, possibly in other words? true: `new_memory.content` adds nothing that `candidates[0].content` lacks. false: `new_memory.content` contains at least one fact that `candidates[0].content` does not state."}, "hyp_new": {"type": "noul", "instructions": {"question": "Is `new_memory.content` a question, proposal, wish, plan, or hypothetical, rather than a statement of what is now the case?", "focus": "Judge the form of the note only. Do not judge whether it is true."}, "criteria": {"true": {"what": "The note asks, suggests, wonders, or describes something that might happen or is being considered", "examples": ["Should we move to SQLite?", "We might migrate off Postgres next quarter.", "What if we dropped the Redis cache?", "Proposal: switch the default region to eu-west."]}, "false": {"what": "The note states something as a fact, decision, or completed change, even casually", "examples": ["We migrated to SQLite last Tuesday.", "The user now prefers dark mode.", "Decided: default region is eu-west from today.", "Config change merged: cache TTL is 30s."]}}}, "hyp_candidate": {"type": "noul", "instructions": {"question": "Is `candidates[0].content` a question, proposal, wish, plan, or hypothetical, rather than a statement of what is now the case?", "focus": "Judge the form of the note only. Do not judge whether it is true."}, "criteria": {"true": {"what": "The note asks, suggests, wonders, or describes something that might happen or is being considered", "examples": ["Should we move to SQLite?", "We might migrate off Postgres next quarter.", "What if we dropped the Redis cache?", "Proposal: switch the default region to eu-west."]}, "false": {"what": "The note states something as a fact, decision, or completed change, even casually", "examples": ["We migrated to SQLite last Tuesday.", "The user now prefers dark mode.", "Decided: default region is eu-west from today.", "Config change merged: cache TTL is 30s."]}}}, "partial": {"type": "noul", "instructions": "Does one of `new_memory.content` and `candidates[0].content` change only part of what the other says, such as an exception, a narrower scope, or one case of a general rule, so that the rest of the other note stays true? true: the change applies to one part or case, and the other note's remaining claims still hold. false: the change replaces the whole claim, or neither note changes the other."}}}
-          - name: log_decision
+          # The one place the rule lives: compute the outcome from Jev's votes,
+          # log it with the votes in agent-curation, and hand it to the next steps.
+          - name: decide
             type: elasticsearch.request
             with:
               method: POST
-              path: /agent-curation/_doc
+              path: "/agent-curation/_update/{{ execution.id }}-{{ steps.new_doc.output._id }}-{{ foreach.item._id }}?_source=outcome,review_reason"
               body:
-                execution_id: "{{ execution.id }}"
-                at: "{{ execution.startedAt | date: '%Y-%m-%dT%H:%M:%SZ' }}"
-                new_id: "{{ steps.new_doc.output._id }}"
-                candidate_id: "{{ foreach.item._id }}"
-                candidate_score: "${{ foreach.item._score }}"
-                model: "${{ steps.ask_jev.output.data.model }}"
-                answers: "${{ steps.ask_jev.output.data.answers }}"
+                scripted_upsert: true
+                upsert: {}
+                script:
+                  lang: painless
+                  source: |
+                    def a = params.a;
+                    double chg = Math.max(a.new_reports_change.noul, a.candidate_reports_change.noul);
+                    boolean conflict = (a.same_question.noul >= 0.70 && a.different_answer.noul >= 0.85)
+                        || a.outdated.noul >= 0.80 || chg >= 0.80;
+                    boolean newCovers = a.new_covers.noul >= 0.75;
+                    boolean candCovers = a.candidate_covers.noul >= 0.75;
+                    String outcome = 'none';
+                    String reason = null;
+                    if (conflict) {
+                      if (a.hyp_new.noul >= 0.70) { outcome = 'review'; reason = 'hypothetical'; }
+                      else if (a.partial.noul >= 0.70) { outcome = 'review'; reason = 'partial'; }
+                      else { outcome = 'superseded'; }
+                    } else if (newCovers && candCovers) {
+                      outcome = 'duplicate';
+                    } else if (newCovers) {
+                      outcome = 'candidate_subsumed';
+                    } else if (candCovers) {
+                      outcome = 'new_subsumed';
+                    }
+                    ctx._source.putAll(params.log);
+                    ctx._source.answers = a;
+                    ctx._source.outcome = outcome;
+                    ctx._source.review_reason = reason;
+                  params:
+                    a: "${{ steps.ask_jev.output.data.answers }}"
+                    log:
+                      execution_id: "{{ execution.id }}"
+                      at: "{{ execution.startedAt | date: '%Y-%m-%dT%H:%M:%SZ' }}"
+                      new_id: "{{ steps.new_doc.output._id }}"
+                      candidate_id: "{{ foreach.item._id }}"
+                      candidate_score: "${{ foreach.item._score }}"
+                      model: "${{ steps.ask_jev.output.data.model }}"
+          # The older note: superseded, flagged for review, or subsumed by the new one.
           - name: apply_to_candidate
             type: elasticsearch.request
             with:
@@ -93,29 +127,26 @@ steps:
                 script:
                   lang: painless
                   source: |
-                    def a = params.a;
-                    double chg = Math.max(a.new_reports_change.noul, a.candidate_reports_change.noul);
-                    boolean conflict = (a.same_question.noul >= 0.70 && a.different_answer.noul >= 0.85)
-                        || a.outdated.noul >= 0.80 || chg >= 0.80;
-                    boolean hyp = a.hyp_new.noul >= 0.70;
-                    boolean partial = a.partial.noul >= 0.70;
-                    if (conflict && !hyp && !partial) {
+                    String o = params.outcome;
+                    if (o == 'superseded') {
                       ctx._source.status = 'superseded';
                       ctx._source.superseded_by = params.new_id;
                       ctx._source.superseded_at = params.now;
-                    } else if (conflict) {
+                    } else if (o == 'review') {
                       ctx._source.needs_review = true;
-                      ctx._source.review_reason = hyp ? 'hypothetical' : 'partial';
+                      ctx._source.review_reason = params.reason;
                       ctx._source.review_with = params.new_id;
-                    } else if (a.new_covers.noul >= 0.75 && a.candidate_covers.noul < 0.75) {
+                    } else if (o == 'candidate_subsumed') {
                       ctx._source.subsumed_by = params.new_id;
                     } else {
                       ctx.op = 'noop';
                     }
                   params:
-                    a: "${{ steps.ask_jev.output.data.answers }}"
+                    outcome: "{{ steps.decide.output.get._source.outcome }}"
+                    reason: "{{ steps.decide.output.get._source.review_reason }}"
                     new_id: "{{ steps.new_doc.output._id }}"
                     now: "{{ execution.startedAt | date: '%Y-%m-%dT%H:%M:%SZ' }}"
+          # The new note: a duplicate of the older one, or subsumed by it.
           - name: apply_to_new
             type: elasticsearch.request
             with:
@@ -125,19 +156,16 @@ steps:
                 script:
                   lang: painless
                   source: |
-                    def a = params.a;
-                    double chg = Math.max(a.new_reports_change.noul, a.candidate_reports_change.noul);
-                    boolean conflict = (a.same_question.noul >= 0.70 && a.different_answer.noul >= 0.85)
-                        || a.outdated.noul >= 0.80 || chg >= 0.80;
-                    if (!conflict && a.new_covers.noul >= 0.75 && a.candidate_covers.noul >= 0.75) {
+                    String o = params.outcome;
+                    if (o == 'duplicate') {
                       ctx._source.duplicate_of = params.cand_id;
-                    } else if (!conflict && a.candidate_covers.noul >= 0.75 && a.new_covers.noul < 0.75) {
+                    } else if (o == 'new_subsumed') {
                       ctx._source.subsumed_by = params.cand_id;
                     } else {
                       ctx.op = 'noop';
                     }
                   params:
-                    a: "${{ steps.ask_jev.output.data.answers }}"
+                    outcome: "{{ steps.decide.output.get._source.outcome }}"
                     cand_id: "{{ foreach.item._id }}"
       - name: mark_curated
         type: elasticsearch.update
