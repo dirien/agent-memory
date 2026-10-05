@@ -119,7 +119,8 @@ cmd_status() {
   # Count queued files
   local queued=0
   local _files
-  _files="$(find "$BRIDGE_FALLBACK_DIR" -path "*/outbox/*.json" -type f 2>/dev/null)"
+  # find fails when fallback/ doesn't exist yet (fresh clone); that's 0 queued, not an error
+  _files="$(find "$BRIDGE_FALLBACK_DIR" -path "*/outbox/*.json" -type f 2>/dev/null || true)"
   if [[ -n "$_files" ]]; then
     queued="$(echo "$_files" | wc -l | tr -d ' ')"
   fi
