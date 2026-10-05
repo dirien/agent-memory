@@ -154,12 +154,12 @@ workflow_run() {
   done
 
   local payload
-  payload="$(jq -n --argjson input "$input_json" '{"input": $input}')"
+  payload="$(jq -n --argjson input "$input_json" '{"inputs": $input}')"
 
   local result
-  result="$(_wf_curl POST "/api/workflows/${wf_id}/run" -d "$payload")"
+  result="$(_wf_curl POST "/api/workflows/workflow/${wf_id}/run" -d "$payload")"
   local exec_id
-  exec_id="$(echo "$result" | jq -r '.id // empty')"
+  exec_id="$(echo "$result" | jq -r '.workflowExecutionId // .id // empty')"
   if [[ -z "$exec_id" ]]; then
     echo "ERROR triggering workflow:" >&2
     echo "$result" | jq . >&2
@@ -176,18 +176,19 @@ workflow_status() {
     return 1
   fi
   local result
-  result="$(_wf_curl GET "/api/workflowExecutions/${exec_id}")"
+  result="$(_wf_curl GET "/api/workflows/executions/${exec_id}")"
   local status
   status="$(echo "$result" | jq -r '.status // "unknown"')"
   echo "Status: $status"
   echo "$result" | jq '{
     id,
-    workflow_id,
+    workflowId,
     status,
-    started_at,
-    completed_at,
-    duration_ms,
-    steps: (.steps // {} | to_entries | map({step: .key, status: .value.status}) )
+    startedAt,
+    finishedAt,
+    duration,
+    error,
+    steps: (.stepExecutions // [] | map({step: .stepId, status}))
   }'
 }
 
@@ -200,8 +201,13 @@ workflow_delete() {
   local wf_id
   wf_id="$(_wf_resolve "$name_or_id")" || return 1
   local result status_code
-  result="$(_wf_curl DELETE "/api/workflows/${wf_id}")"
-  status_code="$(echo "$result" | jq -r '.statusCode // 200')"
+  result="$(_wf_curl DELETE "/api/workflows/workflow/${wf_id}")"
+  # Success is 200 with an empty body; errors come back as JSON with statusCode
+  if [[ -z "$result" ]]; then
+    status_code=200
+  else
+    status_code="$(echo "$result" | jq -r '.statusCode // 200')"
+  fi
   if [[ "$status_code" != "200" && "$status_code" != "204" ]]; then
     echo "ERROR deleting $wf_id (HTTP $status_code):" >&2
     echo "$result" | jq -r '.message // .' >&2
