@@ -22,7 +22,8 @@ the user again.
 
 `bridge recall` is hybrid (BM25 + Jina v5 semantic, fused with ES|QL
 FORK/FUSE) and decays older memories, so phrase the query the way you would ask
-a colleague, not as keywords.
+a colleague, not as keywords. It skips memories that were superseded or are
+duplicates of another one.
 
 ## Remember what is worth keeping
 
@@ -39,6 +40,20 @@ Types: `decision`, `feedback`, `project`, `reference`, `observation`.
 Add `--scope shared` when other agents should see it.
 
 Do not store secrets, tokens, or anything the repo or git history already records.
+
+## When a stored fact changes
+
+Remember the new state first, then retire the old memory and link it to the
+new one, so the history stays readable:
+
+```bash
+bridge remember decision "terraform-provider 1.5.0 fixed the _id error; drop the 1.3.0 pin" --title "Provider pin removed"
+bridge forget <old_memory_id> --superseded-by <new_memory_id>
+```
+
+If you're not sure an older memory is now wrong, only remember the new one.
+Where the memory-curation workflow runs, it compares every new memory with its
+older neighbours within about a minute and supersedes, links or flags them.
 
 ## Track multi-step work
 
