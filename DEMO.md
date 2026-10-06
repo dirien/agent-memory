@@ -20,7 +20,9 @@ Nothing is scripted into the memory: the facts are real (`lib/memory.sh`
 applies `DECAY` only in the hybrid ES|QL path; `--keyword` sorts by score with
 `updated_at` as a tie-break, `--semantic` ignores age), and Claude stores them
 because the agent-memory skill tells it to. Don't fix this in `main` before
-the talk, or Friday has nothing to find.
+the talk, or Friday has nothing to find. The demo clone leaves out this file
+and `slides/`, which describe the bug: a `grep` on Friday must find the code,
+not the answer.
 
 ## 0. Before you start (host)
 
@@ -39,8 +41,11 @@ sbx secret set-custom --host '*.es.us-east-1.aws.elastic.cloud' --env BRIDGE_ES_
 sbx secret set-custom --host '*.kb.us-east-1.aws.elastic.cloud' --env ELASTIC_MCP_API_KEY \
   --command "$PULUMI_BIN env get $E elastic.mcpApiKey --value string --show-secrets | tr -d '\n'"
 
-# The project Claude works on: a fresh clone of this repo
-rm -rf ~/demo/agent-memory && git clone -q https://github.com/dirien/agent-memory ~/demo/agent-memory
+# The project Claude works on: a fresh clone of this repo, without DEMO.md and
+# slides/ (both spell out the bug Claude is meant to find on Friday)
+rm -rf ~/demo/agent-memory && git clone -q --no-checkout https://github.com/dirien/agent-memory ~/demo/agent-memory \
+  && git -C ~/demo/agent-memory sparse-checkout set --no-cone '/*' '!/DEMO.md' '!/slides/' \
+  && git -C ~/demo/agent-memory checkout -q main
 cd ~/workshops/give-your-coding-agent-an-elastic-memory   # for scripts/demo-sandbox.sh
 ```
 
@@ -145,7 +150,9 @@ this checkout, which holds the stack state; not in `~/demo`).
 ```bash
 /exit                                   # in each session
 sbx rm fri mon wed
-rm -rf ~/demo/agent-memory && git clone -q https://github.com/dirien/agent-memory ~/demo/agent-memory
+rm -rf ~/demo/agent-memory && git clone -q --no-checkout https://github.com/dirien/agent-memory ~/demo/agent-memory \
+  && git -C ~/demo/agent-memory sparse-checkout set --no-cone '/*' '!/DEMO.md' '!/slides/' \
+  && git -C ~/demo/agent-memory checkout -q main
 ```
 
 Wipe the indices before the talk (from this repo, keys from ESC):
