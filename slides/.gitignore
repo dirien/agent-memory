@@ -2,3 +2,6 @@ node_modules
 dist
 .slidev
 *.log
+
+# Film still for the Memento slides: local only, not ours to publish
+public/memento-leonard.jpg

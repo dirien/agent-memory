@@ -44,7 +44,7 @@ class: soul-slide
 
 # SOUL.md
 
-<div class="h-[50px]"></div>
+<div class="h-[16px]"></div>
 
 <<< @/snippets/soul.md md
 
@@ -100,13 +100,14 @@ without the agent-memory kit.
 
 <div class="absolute inset-0 flex flex-col justify-center items-center px-20 text-center">
   <h1 class="!text-[7rem] !leading-tight !font-semibold !tracking-tight !m-0 !max-w-[95%]">
-    Your coding agent has <span class="text-[var(--p-primary)]">amnesia.</span>
+    Your coding agent has <span v-click class="text-[var(--p-primary)]">amnesia.</span>
   </h1>
 </div>
 
 <!--
-~10s. Let it land. Everyone here has explained the same convention to their
-agent three sessions in a row.
+~10s. Say "Your coding agent has...", click, "amnesia." Let it land.
+Everyone here has explained the same convention to their agent three
+sessions in a row.
 -->
 
 ---
@@ -116,14 +117,14 @@ class: 'meme-slide'
 <div class="meme-frame memento">
   <div class="memento__scene">
     <img src="/memento-leonard.jpg" alt="Leonard Shelby in Memento, holding up a Polaroid" />
-    <div class="memento__photo">&gt; claude</div>
-    <div class="memento__caption">WiFi is bad.<br/>Record every demo.</div>
+    <div v-click="1" class="memento__photo">&gt; claude</div>
+    <div v-click="1" class="memento__caption">WiFi is bad.<br/>Record every demo.</div>
   </div>
 </div>
 
 <!--
-~10s. Memento. Leonard can't form new memories, so he runs on Polaroids
-with notes on them. Say nothing and wait for the laugh, or: "Leonard, but
+~10s. Memento. Let them recognise Leonard first, then click: the Polaroid.
+Leonard can't form new memories, so he runs on Polaroids with notes on them. Say nothing and wait for the laugh, or: "Leonard, but
 for your agent." This is Friday's first note.
 Optional line: Karpathy, May 2025: "LLMs are quite literally like the guy in
 Memento, except we haven't given them their scratchpad yet."
@@ -169,6 +170,7 @@ summary" is exactly where fix one breaks.
 
 # Fix one: never close the session.
 
+<div v-click>
 <div class="stat">53%</div>
 
 <p class="stat-caption">
@@ -176,6 +178,7 @@ of safety instructions survived one round of compaction, even though the prompt 
 </p>
 
 <p class="stat-source">University of Passau, arXiv:2608.22752</p>
+</div>
 
 <p v-click class="takeaway">/compact decides what your agent forgets. It doesn't ask you.</p>
 
@@ -183,6 +186,7 @@ of safety instructions survived one round of compaction, even though the prompt 
 ~50s. Hand-raise: "Who has a session open right now that they're afraid to
 close?" The first fix everyone tries is to keep the session alive. Long
 sessions get compacted, and the summary keeps what the summary keeps.
+[click] the number. [click] the takeaway.
 After five rounds, each halving the text, 10% of the safety instructions
 were left.
 Fact-check: both figures as quoted in my "10 tips" post (2026-09-21), which
@@ -193,6 +197,7 @@ cites arXiv:2608.22752. https://www.pulumi.com/blog/10-tips-to-improve-your-codi
 
 # Fix two: write it down yourself.
 
+<div v-click>
 <div class="stat">73.8%</div>
 
 <p class="stat-caption">
@@ -200,12 +205,13 @@ of AI configuration files in 441 repositories were committed once and never touc
 </p>
 
 <p class="stat-source">Denisov-Blanch et al., arXiv:2608.25241</p>
+</div>
 
 <p v-click class="takeaway">Every lesson needs a human to write it down, and to keep it true.</p>
 
 <!--
 ~50s. Hand-raise: "Who has a CLAUDE.md or an AGENTS.md? Who changed it this
-month?" The second fix: write the rules down. It works, and I still do it
+month?" [click] the number. The second fix: write the rules down. It works, and I still do it
 (one screen, layered, a Stop hook that proposes updates; my May post). But
 the file only knows what someone typed into it, and it goes stale.
 Fact-check: 73.8% and 441 repositories as quoted in my "10 tips" post
@@ -221,8 +227,8 @@ Fact-check: 73.8% and 441 repositories as quoted in my "10 tips" post
 ```text
 ~/.claude/projects/<project>/memory/
 ├── MEMORY.md        # index: first 200 lines or 25 KB load every session
-├── user-role.md
-└── feedback-tests.md
+├── user_role.md
+└── feedback_testing.md
 ```
 
 </div>
@@ -239,11 +245,16 @@ Fact-check: 73.8% and 441 repositories as quoted in my "10 tips" post
 and the index loads into every session. This is a real step up. It's also
 the reason Friday's sandbox knew and Monday's didn't: Monday was a new
 container with a new home directory.
-Fact-check: "The first 200 lines of MEMORY.md, or the first 25KB, whichever
-comes first, are loaded at the start of every conversation." "Auto memory is
-machine-local ... Files are not shared across machines or cloud
-environments." https://code.claude.com/docs/en/memory
-The two topic file names are illustrative.
+If someone asks: the docs let you move the folder with autoMemoryDirectory,
+for example into a synced directory. It's still a folder of Markdown files
+that Claude reads by name, not something you can search.
+Fact-check (code.claude.com/docs/en/memory, read 2026-10-05): "Each project
+gets its own memory directory at ~/.claude/projects/<project>/memory/." "The
+first 200 lines of MEMORY.md, or the first 25KB, whichever comes first, are
+loaded at the start of every conversation." "Auto memory is machine-local.
+... Files are not shared across machines or cloud environments." Topic files
+(user_role.md, feedback_testing.md are the docs' own examples) are read on
+demand, not at startup.
 -->
 
 ---
@@ -318,7 +329,7 @@ CLAUDE.md       the schema: how to keep the wiki
 ```
 
 </div>
-<div class="quote-card">
+<div v-click class="quote-card">
 <p>"The part he couldn't solve was who does the maintenance. The LLM handles that."</p>
 <p class="quote-by">Karpathy, on the Memex, LLM Wiki gist</p>
 </div>
@@ -329,6 +340,7 @@ CLAUDE.md       the schema: how to keep the wiki
 <!--
 ~50s. Karpathy's gist: three layers (raw sources, the wiki, a schema file
 such as CLAUDE.md or AGENTS.md) and three operations (ingest, query, lint).
+[click] his line about the Memex. [click] the takeaway.
 The index file works "surprisingly well at moderate scale (~100 sources,
 ~hundreds of pages)". In July I wrote about putting that wiki in git in a
 format another agent can read (Google's Open Knowledge Format).
@@ -363,12 +375,12 @@ Fact-check: gist; my July post (above).
 
 <div class="absolute inset-0 flex flex-col justify-center items-center px-20 text-center">
   <h1 class="!text-[7rem] !leading-tight !font-semibold !tracking-tight !m-0 !max-w-[95%]">
-    Memory is a <span class="text-[var(--p-primary)]">search problem.</span>
+    Memory is a<br/><span v-click class="text-[var(--p-primary)]">search problem.</span>
   </h1>
 </div>
 
 <!--
-~15s. And we're standing in the office of the company that does search.
+~15s. "Memory is a...", click, "search problem." And we're standing in the office of the company that does search.
 -->
 
 ---
@@ -377,22 +389,26 @@ Fact-check: gist; my July post (above).
 
 <table class="cmp !mt-2">
 <thead>
-<tr><th></th><th>CLAUDE.md</th><th>Auto memory</th><th>LLM wiki</th><th class="cmp-es">Elasticsearch</th></tr>
+<tr><th></th><th v-click="1">CLAUDE.md</th><th v-click="2">Auto memory</th><th v-click="3">LLM wiki</th><th v-click="4" class="cmp-es">Elasticsearch</th></tr>
 </thead>
 <tbody>
-<tr><td>Who writes it</td><td>you</td><td>the agent</td><td>the agent</td><td class="cmp-es">the agent, via hooks and CLI</td></tr>
-<tr><td>New laptop or sandbox</td><td>in git</td><td>starts empty</td><td>in git</td><td class="cmp-es">same index</td></tr>
-<tr><td>Your teammate's agent</td><td>via git</td><td>never sees it</td><td>via git, in your format</td><td class="cmp-es">same index, or over MCP</td></tr>
-<tr><td>How it's found</td><td>loaded every session</td><td>first 200 lines loaded</td><td>index.md, then grep</td><td class="cmp-es">hybrid search, top 5</td></tr>
-<tr><td>As it grows</td><td>eats context</td><td>gets truncated</td><td>needs real search</td><td class="cmp-es">ranked; older memories fade</td></tr>
+<tr><td>Who writes it</td><td v-click="1">you</td><td v-click="2">the agent</td><td v-click="3">the agent</td><td v-click="4" class="cmp-es">the agent, via hooks and CLI</td></tr>
+<tr><td>New laptop or sandbox</td><td v-click="1">in git</td><td v-click="2">starts empty</td><td v-click="3">in git</td><td v-click="4" class="cmp-es">same index</td></tr>
+<tr><td>Your teammate's agent</td><td v-click="1">via git</td><td v-click="2">never sees it</td><td v-click="3">via git, in your format</td><td v-click="4" class="cmp-es">same index, or over MCP</td></tr>
+<tr><td>How it's found</td><td v-click="1">loaded every session</td><td v-click="2">first 200 lines loaded</td><td v-click="3">index.md, then grep</td><td v-click="4" class="cmp-es">hybrid search, top 5</td></tr>
+<tr><td>As it grows</td><td v-click="1">eats context</td><td v-click="2">gets truncated</td><td v-click="3">needs real search</td><td v-click="4" class="cmp-es">ranked; older memories fade</td></tr>
 </tbody>
 </table>
 
 <!--
-~75s. The whole talk so far on one slide. Walk the rows, not the columns:
-"New laptop? Teammate? How does the agent find it? What happens as it
-grows?" Each Markdown approach gives up at least one row. The Elasticsearch
-column is what the rest of the talk shows.
+~90s. The whole talk so far on one slide. Start with the rows, the
+questions every memory has to answer: who writes it, new laptop, teammate,
+how the agent finds it, what happens as it grows. Then one column per click:
+[click] CLAUDE.md: you write it, git carries it, it eats context.
+[click] Auto memory: the agent writes it, and it stays on this machine.
+[click] LLM wiki: travels in git, but needs real search once it grows.
+[click] Elasticsearch: what the rest of the talk shows.
+Each Markdown approach gives up at least one row.
 Fact-check:
 - CLAUDE.md: "Longer files consume more context and reduce adherence."
   https://code.claude.com/docs/en/memory
@@ -403,20 +419,19 @@ Fact-check:
 -->
 
 ---
-layout: diagram
----
 
 # agent-memory, by Jeff Vestal.
 
-```mermaid {scale: 1.4}
-flowchart LR
-  A[Claude Code] -- "SessionStart · PostToolUse · SessionEnd hooks" --> B[bridge CLI]
-  B -- "remember · recall · log · task" --> C[(Elasticsearch Serverless)]
-  B -. offline .-> D[fallback/ outbox]
-  D -. "bridge sync" .-> C
-  C --> E[Kibana: dashboard + Agent Builder MCP]
-  F[Any MCP client] -- "read-only key" --> E
-```
+<div class="diagram-frame !mt-4">
+  <img src="/diagrams/architecture.svg" alt="Claude Code hooks call the bridge CLI, which writes to Elasticsearch Serverless or an offline outbox; Kibana serves the dashboard and the Agent Builder MCP server to any MCP client" />
+</div>
+
+<div class="qr-corner">
+  <div class="qr-corner__code">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fgithub.com%2Fjeffvestal%2Fagent-memory" alt="QR code: github.com/jeffvestal/agent-memory" />
+  </div>
+  <span>github.com/jeffvestal/agent-memory</span>
+</div>
 
 <!--
 ~50s. Credit Jeff (Elastic) up front: this is his project, I extended it.
@@ -424,16 +439,23 @@ Pure bash, curl and jq. Seven indices: memory, messages, sessions, tasks,
 status, entities, entity history. Offline writes queue locally and sync
 later. I added the Pulumi program, the sandbox kit and the MCP path.
 Sources: github.com/jeffvestal/agent-memory; Jeff's Elasticsearch Labs post
-(2026-06-15).
+(2026-06-15). Diagram: diagrams/architecture.mmd, drawn with
+mermaid-to-excalidraw (diagrams/render/README.md). QR code (bottom right)
+points at github.com/jeffvestal/agent-memory; like the Resources slide it
+comes from api.qrserver.com at render time.
 -->
 
 ---
 
 # Recall is one ES|QL query.
 
-<div class="big-code !mt-6">
+<div class="diagram-frame diagram-frame--strip !mt-2">
+  <img src="/diagrams/recall.svg" alt="Claude Code runs bridge recall; the bridge CLI sends one ES|QL query to Elasticsearch Serverless; the top 5 memories come back with their content" />
+</div>
 
-```sql
+<div class="big-code !mt-4">
+
+```sql {all|2-4|5|6|7}{at:1}
 FROM agent-memory METADATA _id, _score, _index
 | FORK
     ( WHERE content:"how was the wifi?" OR title:"how was the wifi?" | SORT _score DESC | LIMIT 50 )
@@ -445,17 +467,30 @@ FROM agent-memory METADATA _id, _score, _index
 
 </div>
 
-<p v-click class="!mt-8 !text-[1.6rem] !leading-relaxed text-center text-[var(--p-fg-muted)]">
-BM25 and Jina v5 embeddings side by side, fused, and older memories pushed down.
-</p>
+<div class="step-row">
+  <div v-click="1"><code>FORK</code><p>Two searches at once: by the words (BM25) and by the meaning (Jina v5 embeddings).</p></div>
+  <div v-click="2"><code>FUSE</code><p>The two rankings merge into one list.</p></div>
+  <div v-click="3"><code>DECAY</code><p>Older memories score lower.</p></div>
+  <div v-click="4"><code>LIMIT 5</code><p>Only the best five go back to Claude.</p></div>
+</div>
 
 <!--
-~60s. Monday's question, as the query recall runs. FORK runs the keyword
-branch and the semantic branch, FUSE merges them with reciprocal rank
-fusion, DECAY multiplies the score down by age. 1080 hours is the default
+~75s. Zoom into one arrow of the last diagram: recall. When Claude needs
+something an earlier session decided, it runs bridge recall; the skill and
+the SessionStart hook tell it to. The bridge turns that into this one ES|QL
+query, prints the five best memories with their content, and Claude reads
+them. Monday's question, "how was the wifi?", is the example.
+[click] FORK runs the keyword branch and the semantic branch side by side.
+[click] FUSE merges them with reciprocal rank fusion.
+[click] DECAY multiplies the score down by age. 1080 hours is the default
 45-day window: ES|QL's DECAY rejects "45d", so the bridge converts it.
-Fact-check: trimmed from lib/memory.sh (scope and type filters omitted);
-_esql_decay_duration converts BRIDGE_MEMORY_DECAY_WINDOW.
+[click] Five results go into context, not a whole file.
+Fact-check: query trimmed from lib/memory.sh (scope and type filters
+omitted); _esql_decay_duration converts BRIDGE_MEMORY_DECAY_WINDOW; recall
+default --limit 5 and prints content (7cde8a3). Who calls recall:
+.apm/skills/agent-memory/SKILL.md ("Recall before you re-derive") and
+hooks/session-start.sh. Diagram: diagrams/recall.mmd (the return arrow
+skips the bridge: it prints the results, Claude reads them).
 TODO before saying "forgetting curve": check DECAY's default function
 (linear vs exp) in the Elasticsearch docs.
 -->
@@ -492,7 +527,7 @@ TODO before saying "forgetting curve": check DECAY's default function
 </div>
 <div v-click class="mem-card">
 <div class="mem-caption mem-caption--accent">Scoped</div>
-<p>The bridge key can write seven indices. The MCP key can only read them.</p>
+<p>The bridge key can write the memory indices. The MCP key can only read them.</p>
 <p class="why-benefit">Any agent can read the team's memory. Not every agent can rewrite it.</p>
 </div>
 </div>
@@ -502,9 +537,9 @@ TODO before saying "forgetting curve": check DECAY's default function
 three; they answer the three rows the Markdown approaches gave up.
 If someone asks "why not mem0, Letta or Zep?": they're good, and most of
 them ended up doing hybrid search too. If your team already runs
-Elasticsearch, this is seven more indices, not another vendor.
+Elasticsearch, this is eight more indices, not another vendor.
 Fact-check: lib/memory.sh (limit 5, FORK/FUSE/DECAY); infra/memory.tf
-(bridge key: "all" on the seven indices); infra/mcp.tf (MCP key: "read",
+(bridge key: "all" on the eight indices); infra/mcp.tf (MCP key: "read",
 "view_index_metadata"); a write with the MCP key gets 403 (DEMO.md).
 -->
 
@@ -518,21 +553,293 @@ Fact-check: lib/memory.sh (limit 5, FORK/FUSE/DECAY); infra/memory.tf
 <p class="!mt-4">One developer, one machine, one repo.</p>
 <p>The memory fits in an index file. Karpathy puts that at hundreds of pages.</p>
 </div>
-<div class="mem-card mem-card--primary">
+<div v-click class="mem-card mem-card--primary">
 <div class="mem-caption mem-caption--accent">Reach for Elasticsearch when</div>
 <p class="!mt-4">Memory has to cross machines, sandboxes, agents or people.</p>
 <p>It outgrows what you can load or grep, or you want to see what your agents did.</p>
 </div>
 </div>
 
-<p v-click class="takeaway text-center">The price: a cluster to run, a network call per recall, and a key your agent must never see.</p>
+<p v-click class="takeaway text-center">The price: a cluster to run, a network call per recall, and an API key to look after.</p>
 
 <!--
 ~40s. Be honest here; it buys trust for the rest. A solo developer on one
-laptop doesn't need a cluster. The last line sets up the next section: who
-runs it, and how the agent gets access without holding the key.
+laptop doesn't need a cluster. [click] when you do. [click] the price.
+The cluster and the keys come back in the Pulumi section.
 Fact-check: Karpathy gist, index.md "works surprisingly well at moderate
 scale (~100 sources, ~hundreds of pages)".
+-->
+
+---
+
+# Elasticsearch remembers both.
+
+<div class="grid grid-cols-2 gap-10 !mt-4">
+<div class="mem-card mem-card--muted">
+<div class="mem-caption">Friday</div>
+<p class="!mt-4 !text-[1.6rem] !leading-snug">Only hybrid recall takes a memory's age into account. <code>--keyword</code> and <code>--semantic</code> don't.</p>
+</div>
+<div v-click class="mem-card mem-card--primary">
+<div class="mem-caption mem-caption--accent">Monday</div>
+<p class="!mt-4 !text-[1.6rem] !leading-snug">Fixed: all three recall modes take age into account now.</p>
+</div>
+</div>
+
+<p v-click class="takeaway text-center">Next week an agent asks how recall ranks. Which memory does it believe?</p>
+
+<!--
+~40s. One more cost that wasn't on the last slide: a store that keeps
+everything also keeps what stopped being true. Friday's finding, [click]
+Monday's fix, [click] the question. Both memories were right when
+they were written, and recall can return both. You'll see this exact pair in
+the demo. My July post put it this way: "A wrong runbook in a beautifully
+conformant bundle is still a wrong runbook, now served to every agent on the
+team with confidence."
+Fact-check: lib/memory.sh (DECAY only in the hybrid ES|QL path); "Knowledge as
+Code" (2026-07-14).
+-->
+
+---
+
+# Somebody has to decide which one still holds.
+
+<div class="why-grid !mt-2">
+<div v-click class="mem-card mem-card--muted">
+<div class="mem-caption">You</div>
+<p>Read every new memory against the old ones.</p>
+<p class="why-benefit !text-[var(--p-fg)]">Nobody keeps that up. It's the upkeep that kills wikis.</p>
+</div>
+<div v-click class="mem-card mem-card--muted">
+<div class="mem-caption">Claude</div>
+<p>Ask the LLM about every pair.</p>
+<p class="why-benefit !text-[var(--p-fg)]">It works, but each check is a full model call, and you get prose back that you have to parse.</p>
+</div>
+<div v-click class="mem-card mem-card--primary">
+<div class="mem-caption mem-caption--accent">A small judge</div>
+<p>Ask a few yes-or-no questions and get probabilities back.</p>
+<p class="why-benefit">Fast and cheap enough to check every new memory.</p>
+</div>
+</div>
+
+<p v-click class="takeaway text-center">The third option needs a different kind of model.</p>
+
+<!--
+~50s. Three ways to keep memory true. Doing it yourself is the wiki problem
+from earlier: the upkeep grows faster than the value. Asking Claude works, and
+for a handful of memories it's fine, but it's slow and expensive to run on
+every write, and you'd be parsing its answer. What we want is a judge that
+only answers the question we ask, from options we define, quickly.
+-->
+
+---
+
+# Two ways to think.
+
+<table class="cmp sys-table !mt-2">
+<thead>
+<tr><th></th><th class="cmp-es">System 1</th><th>System 2</th></tr>
+</thead>
+<tbody>
+<tr><td>How it works</td><td class="cmp-es">fast and automatic, no effort</td><td>slow and deliberate, takes effort</td></tr>
+<tr v-click><td>In people</td><td class="cmp-es">2 + 2 = ?<br/>completing "bread and …"</td><td>17 × 24<br/>filling out a tax form</td></tr>
+<tr v-click><td>In models</td><td class="cmp-es">reads a situation and picks from answers you allowed</td><td>writes its answer word by word and can say anything</td></tr>
+<tr v-click><td>In agent memory</td><td class="cmp-es">checks whether an old memory still holds</td><td>writes the code and the memories</td></tr>
+</tbody>
+</table>
+
+<p class="stat-source">Terms from Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011)</p>
+
+<p v-click class="takeaway text-center !mt-4">Checking an old memory is a quick yes-or-no question: System 1 work.</p>
+
+<!--
+~60s. One row per click. The terms come from Daniel Kahneman's Thinking,
+Fast and Slow. [click] System 1 is the part of you that knows 2 + 2 without
+trying. System 2 is the part that
+has to sit down and work out 17 × 24. [click] Claude, like every LLM, works like
+System 2: it writes its answer word by word, takes seconds, and can say
+anything. [click] Most of what a coding agent does is that kind of work, including
+writing memories. Deciding whether an old memory still holds is different:
+it's a quick yes or no, and that's the kind of question a System 1 model is
+for. [click] the takeaway.
+Fact-check: Kahneman, ch. 1, reprinted by Scientific American (2012):
+"System 1 operates automatically and quickly, with little or no effort and no
+sense of voluntary control"; "System 2 allocates attention to the effortful
+mental activities that demand it". "Answer to 2 + 2 = ?" and "Complete the
+phrase 'bread and . . .'" are in the System 1 list, "Fill out a tax form" in
+the System 2 list; 17 × 24 is the chapter's "prototype of slow thinking".
+scientificamerican.com/article/kahneman-excerpt-thinking-fast-and-slow/
+-->
+
+---
+
+<div class="absolute inset-0 flex flex-col justify-center items-center px-20 text-center">
+  <img src="/logos/typesafe-ai.svg" alt="TypeSafe AI" class="!h-[7rem] !w-auto !mb-14" />
+  <h1 class="!text-[8rem] !leading-tight !font-semibold !tracking-tight !m-0">Enter <span class="text-[var(--p-primary)]">Jev!</span></h1>
+</div>
+
+<!--
+~10s. Section break. Pause on it: some of you have seen the name all over
+your feeds for three weeks. "There's a model built for exactly this kind of
+question."
+Logo: TypeSafe AI wordmark from typesafe.ai (public/logos/typesafe-ai.svg),
+used to name the company.
+-->
+
+---
+
+# Jev is a model built for System 1 work.
+
+<p class="slide-sub">TypeSafe AI released it on September 15, and it was on Hacker News, Vercel and Cloudflare within days. It doesn't write text. You describe a situation, ask questions with fixed answers, and it tells you how likely each answer is.</p>
+
+<div class="grid grid-cols-2 gap-8 !mt-6">
+<div class="mem-card mem-card--muted">
+<div class="mem-caption">You send</div>
+<p class="!mt-3"><strong>Older memory:</strong> only hybrid recall takes age into account.</p>
+<p><strong>Newer memory:</strong> fixed, all three recall modes do now.</p>
+<p><strong>Question:</strong> is the older memory outdated? Yes or no.</p>
+</div>
+<div v-click class="mem-card mem-card--primary">
+<div class="mem-caption mem-caption--accent">Jev answers</div>
+<p class="!mt-3 !text-[2.6rem] !leading-tight !font-semibold text-[var(--p-primary)]">yes, 94%</p>
+<p>It can only answer with the options you gave it, so there's nothing to parse.</p>
+</div>
+</div>
+
+<!--
+~60s. Jev comes from TypeSafe AI in San Francisco and has been the model
+people talk about for the last three weeks. TypeSafe calls it a "System One
+model", after Kahneman. One request carries a situation and a few questions;
+the answers come back together, as probabilities, in well under a second. The
+question types are a yes/no (they call it a Noul, short for Bernoulli), a
+choice from a list, and a score. Read the left card, ask the room what they'd
+guess, [click] Jev's answer. The 94% is a real answer for the demo's pair,
+asked today; the same request also said 91% that both memories are about the
+same thing. I wrote about using it to route Claude Code messages between
+models; same idea: a decision, not a conversation.
+Fact-check: typesafe.ai/blog/introducing-system-one-models-and-jev
+(2026-09-15); docs.typesafe.ai/introduction (question types);
+news.ycombinator.com/item?id=49717558 (launch thread); Vercel AI Gateway
+(2026-09-16); Cloudflare model catalog entry (2026-09-17); CEO on HN for
+"Bernoulli"; Jev call for this pair on 2026-10-05 (jev-1.13.0): outdated 0.94,
+same subject 0.91; pulumi.com/blog/route-every-claude-code-message-to-the-right-model-with-jev.
+-->
+
+---
+
+# Every new memory meets its nearest older ones.
+
+<div class="diagram-frame !mt-2">
+  <img src="/diagrams/curation.svg" alt="A new memory goes to a semantic search for its three nearest older memories; Jev answers ten yes/no questions per pair; a Painless rule supersedes the older memory, flags the pair for review, links a duplicate or changes nothing, and logs the votes and outcome to agent-curation" />
+</div>
+
+<!--
+~60s. This runs as a Kibana Workflow, once a minute. It picks up every memory
+it hasn't checked yet, finds the three most similar older ones with semantic
+search, and asks Jev ten yes/no questions about each pair. A small rule in
+Painless turns the answers into a decision, and Elasticsearch applies it.
+Jev never decides which memory is newer; the search only ever returns older
+ones. Recall then skips anything marked superseded.
+Fact-check: infra/workflows/memory-curation.yaml, infra/curation.tf.
+Diagram: diagrams/curation.mmd, drawn with mermaid-to-excalidraw.
+-->
+
+---
+
+# Jev answers, a rule decides.
+
+<div class="grid grid-cols-2 gap-8 !mt-2 big-code">
+<div>
+
+```json
+"outdated": {
+  "type": "noul",
+  "instructions": "Does one of the two memories
+    show that a claim in the other is outdated
+    or no longer true? ..."
+}
+```
+
+<div v-click>
+
+```text
+"the venue fixed the WiFi"
+  vs "the WiFi is unreliable"
+outdated            0.94
+new_reports_change  0.95
+same_question       0.79
+partial             0.20
+hypothetical        0.04
+```
+
+</div>
+
+</div>
+<div v-click>
+
+```java
+boolean conflict =
+    (sameQuestion >= 0.70 && differentAnswer >= 0.85)
+    || outdated >= 0.80
+    || changeReported >= 0.80;
+
+if (!conflict)                outcome = "none";
+else if (hypothetical >= 0.70) outcome = "review";
+else if (partial >= 0.70)      outcome = "review";
+else                           outcome = "superseded";
+```
+
+</div>
+</div>
+
+<p v-click class="takeaway text-center">The thresholds live in code, and every answer is logged next to the decision.</p>
+
+<!--
+~60s. Left: one of the ten questions, [click] and what Jev answered for a
+real pair from a test run. [click] Right: the rule that reads those answers,
+trimmed. [click] the takeaway. I can
+change a threshold in one place, and I can look up why any memory was retired. Questions and thresholds adapted from
+jev-mem (MIT) and invalidate (Apache-2.0, the "plan" guard); the "exception"
+guard is ours, after a test where "the MCP part no longer needs a fallback
+video" would otherwise have retired "every demo step needs one".
+Fact-check: infra/workflows/memory-curation.yaml (step decide, trimmed and
+with shorter names; the real rule also handles duplicates and subsumed),
+infra/workflows/NOTICE.md; votes from the cur-d test run on 2026-10-05.
+-->
+
+---
+
+# It can be wrong, so it only votes.
+
+<div class="why-grid !mt-2">
+<div v-click class="mem-card">
+<div class="mem-caption mem-caption--accent">Typed isn't true</div>
+<p>Jev always answers in the format you asked for, including when it's wrong.</p>
+</div>
+<div v-click class="mem-card">
+<div class="mem-caption mem-caption--accent">Two guards</div>
+<p>In our tests it retired no memory that was still true once two guards were in: one for plans ("we might…"), one for exceptions ("except the MCP part").</p>
+</div>
+<div v-click class="mem-card mem-card--muted">
+<div class="mem-caption">Steering</div>
+<p>A planted sentence can push its answer. So the rule only touches older memories on the same subject, and every decision is logged.</p>
+</div>
+</div>
+
+<p v-click class="takeaway text-center">A human can check every decision it made.</p>
+
+<!--
+~50s. Typed isn't the same as true: "can't return a value outside the schema"
+doesn't mean "can't be wrong". We tested it on 141 labelled memory pairs, in
+both orders. Without the guards it once retired a rule because of an exception
+to it; with the guards it made no harmful decision. On jev-mem's own held-out
+pairs it was right 98% of the time. Its confidence moves by up to 0.15 between
+runs, so doubtful pairs go to review instead of being applied. And the jev-router
+post reports that one injected sentence moved its answer on 73.5% of tickets,
+which is why the rule stays narrow and everything is logged. All of this is
+code, which brings me to Pulumi.
+Fact-check: threshold test 1d on 2026-10-05 (our 30 pairs + jev-mem's
+evals/consolidation*.json, 282 calls, 0 harmful with guards); jev-mem
+held-out 104/106; the 73.5% figure from the jev-router post (2026-09-28).
 -->
 
 ---
@@ -564,7 +871,7 @@ runtime: hcl
 <<< @/snippets/infra/main.tf#project hcl
 
 </div>
-<div>
+<div v-click>
 
 <<< @/snippets/infra/main.tf#provider hcl
 
@@ -574,15 +881,16 @@ runtime: hcl
 <!--
 ~50s. runtime: hcl in Pulumi.yaml. elastic/ec and elastic/elasticstack are
 Terraform providers, pulled from the OpenTofu registry and bridged on the
-fly. The second provider is configured from the first resource's outputs:
-the admin credentials never leave the stack. 16 resources in total.
+fly. [click] The second provider is configured from the first resource's outputs:
+the admin credentials never leave the stack. 20 resources in total, with
+curation on.
 Sources: pulumi.com/docs/iac/languages-sdks/hcl; infra/main.tf (regions
 "project" and "provider"); infra/Pulumi.yaml (trimmed).
 -->
 
 ---
 
-# Seven indices, two scoped keys.
+# Eight indices, two scoped keys.
 
 <div class="big-code !mt-4">
 
@@ -609,7 +917,7 @@ resource "elasticstack_elasticsearch_security_api_key" "mcp" {      # any MCP cl
 </div>
 
 <!--
-~40s. semantic_text fields point at Jina v5 on the Elastic Inference
+~40s. Seven indices for the bridge, the eighth is the curation log. semantic_text fields point at Jina v5 on the Elastic Inference
 Service, so there's no model to deploy. Two keys: the bridge writes, the MCP
 server only reads. That's the "Scoped" card from before, in code.
 Fact-check: trimmed from infra/memory.tf and infra/mcp.tf (cluster
@@ -618,93 +926,63 @@ privileges, Kibana application privileges and metadata omitted).
 
 ---
 
-<div class="absolute inset-0 flex flex-col justify-center items-center px-20 text-center">
-  <h1 class="!text-[6rem] !leading-tight !font-semibold !tracking-tight !m-0 !max-w-[95%]">
-    Where does the agent <span class="text-[var(--p-primary)]">run?</span>
-  </h1>
-</div>
-
-<!--
-~10s. We just put a memory API key next to an agent with shell access. Don't
-hand it the key.
--->
-
----
-
-# Docker Sandboxes: the key never enters the box.
+# One more provider, for what elasticstack can't create.
 
 <div class="big-code !mt-4">
 
-```bash
-# on the host: the real key stays in Pulumi ESC
-sbx secret set-custom --host '*.es.us-east-1.aws.elastic.cloud' \
-  --env BRIDGE_ES_API_KEY \
-  --command "pulumi env get $E elastic.bridgeApiKey --value string --show-secrets"
+```hcl
+# Workflows only call out through Kibana's .http connector
+resource "restapi_object" "jev_connector" {
+  count = local.curation_enabled ? 1 : 0
+  path  = "/api/actions/connector"
+  data  = jsonencode(merge(local.jev_connector, { connector_type_id = ".http" }))
 
-# in the sandbox
-$ echo $BRIDGE_ES_API_KEY
-<placeholder>     # swapped for the real key on *.es.…elastic.cloud only
+  ignore_changes_to       = ["secrets"]   # Kibana never returns them
+  ignore_server_additions = true
+}
+
+resource "elasticstack_kibana_agentbuilder_workflow" "curation" {
+  count              = local.curation_enabled ? 1 : 0
+  configuration_yaml = replace(file("workflows/memory-curation.yaml"),
+    "__JEV_CONNECTOR_ID__", restapi_object.jev_connector[0].id)
+}
 ```
 
 </div>
 
-<p v-click class="!mt-8 !text-[1.6rem] !leading-relaxed text-center">
-Any other host gets the placeholder. The first time Claude saw it, it reported a leaked credential.
-</p>
-
 <!--
-~50s. The sandbox gets a placeholder in the variable; the proxy replaces it
-in request headers, only for hosts matching the pattern, by running the
-pulumi env get command on the host. Rotate the key in Pulumi and nothing in
-the sandbox changes. Laugh line: Claude flagged the placeholder as a live
-credential, so the SessionStart hook now tells it what it is.
-Fact-check: kit/README.md "Why placeholders" (verified 2026-09-27: other
-ApiKey values got 401; survived a key rotation); DEMO.md (command trimmed,
-`| tr -d '\n'` omitted); hooks/session-start.sh; commit 76515b9.
-Never show the real placeholder value on screen.
--->
-
----
-
-# Hooks are a package now.
-
-<div class="big-code !mt-6">
-
-```bash
-apm install -g --target claude "$ROOT"     # the sandbox kit runs this at startup
-```
-
-</div>
-
-<p v-click class="!mt-8 !text-[1.6rem] !leading-relaxed text-center">
-SessionStart syncs memory files and lists open tasks. PostToolUse indexes edited Markdown. SessionEnd logs the session. Plus a skill: <em>recall before you re-derive</em>.
-</p>
-
-<!--
-~30s. Microsoft APM installs the hooks, the skill and the MCP server at user
-scope. Nothing gets copied into settings.json by hand, and the repo carries
-no project-level hooks.
-Fact-check: scripts/sbx-startup.sh; .apm/hooks/agent-memory.json;
-.apm/skills/agent-memory/SKILL.md ("Recall before you re-derive").
+~40s. elastic/elasticstack creates workflows but not the .http connector they
+need (its connector map ends at .webhook), so that one object goes through
+Mastercard/restapi, pinned like the other providers. The Jev key comes from a
+Pulumi config secret and ends up in Kibana's encrypted secret headers; no
+agent ever sees it. Without a key, count = 0 and nothing is created.
+Fact-check: trimmed from infra/curation.tf; infra/sdks/restapi/hcl.sdk.json.
 -->
 
 ---
 
 <div class="absolute inset-0 flex flex-col justify-center items-center px-20 text-center">
   <h1 class="!text-[10rem] !leading-tight !font-semibold !tracking-tight !m-0 text-[var(--p-primary)] !max-w-[95%]">Demo.</h1>
-  <p class="!mt-6 !text-[2.4rem] text-[var(--p-fg-muted)] !m-0">Friday, then Monday. Again.</p>
+  <p class="!mt-6 !text-[2.4rem] text-[var(--p-fg-muted)] !m-0">A bug you only debug once.</p>
 </div>
 
 <!--
 ~7 min. Full script: DEMO.md. Pre-recorded fallback for every step.
-1. Friday, sandbox mem-a: `! bridge status`, then the Friday prompt from the
-   opening. Claude runs `bridge remember` and `bridge task start`. /exit.
-2. Monday, fresh sandbox mem-b (new home directory, empty auto memory):
-   "regarding my prep for the talk, how was the wifi?" -> one recall, the
-   constraint in Claude's words. "And what's still open from that
-   session?" -> the suspended QR task.
-3. Same sandbox: the ES|QL prompt, elastic-memory MCP only, two tables.
-4. Kibana dashboard (scripts/pulumi.sh stack output dashboard_url).
+Say first: every day is a fresh Docker sandbox, a new container with an empty
+home directory, so nothing local survives. The kit installs the hooks, the
+skill and the MCP server at startup; the API keys stay on the host and the
+sandbox only gets placeholders. If Claude calls one a leaked key: it isn't.
+1. Friday, sandbox fri on a clone of this repo: "bridge recall --keyword
+   ranks a months-old memory above last week's. Find out why, don't change
+   code." Claude finds that only hybrid recall applies DECAY; keeps the
+   finding, opens a task. /exit.
+2. Monday, fresh sandbox mon: "Let's fix the recall ranking issue from
+   Friday." Task in context, one recall, straight to the fix. /exit.
+3. Wednesday, sandbox wed: "do --keyword and --semantic take age into
+   account?" Today's answer; Friday's finding is superseded (by Claude or
+   the curation workflow within a minute).
+4. Same sandbox: the MCP prompt (status, superseded_by, curation outcome),
+   then the Kibana dashboard.
 Exit with /exit, not Ctrl-\, or SessionEnd doesn't run.
 -->
 
@@ -734,34 +1012,15 @@ Fact-check: commit a802511.
 
 ---
 
-# A wrong memory reaches every agent.
-
-<div class="quote-card !mt-4">
-<p>"A wrong runbook in a beautifully conformant bundle is still a wrong runbook, now served to every agent on the team with confidence."</p>
-<p class="quote-by">Engin Diri, "Knowledge as Code", pulumi.com/blog, July 2026</p>
-</div>
-
-<p v-click class="takeaway">Review memory like you review code.</p>
-
-<!--
-~45s. Sharing cuts both ways. Memory compounds, and slop compounds right
-alongside it (my June post). Leonard again: his notes worked until someone
-else wrote one. Keep a lint pass, and let a human see what changed.
-Fact-check: "Knowledge as Code" (2026-07-14); "Stop Prompting. Design the
-Loop." (2026-06-09).
--->
-
----
-
 <div class="absolute inset-0 flex flex-col justify-center items-center px-20 text-center">
   <h1 class="!text-[5.5rem] !leading-tight !font-semibold !tracking-tight !m-0 !max-w-[95%]">
     Memory is infrastructure.<br/>
-    <span class="text-[var(--p-primary)]">Treat it like infrastructure.</span>
+    <span v-click class="text-[var(--p-primary)]">Treat it like infrastructure.</span>
   </h1>
 </div>
 
 <!--
-~15s. Takeaway. Versioned, searchable, shared, with scoped keys. In May I
+~15s. Takeaway. [click] the second line. Versioned, searchable, shared, with scoped keys. In May I
 wrote "treat the harness like infrastructure"; memory is the part of the
 harness that has to outlive the session.
 -->
@@ -795,6 +1054,9 @@ harness that has to outlive the session.
   </div>
 
   <div class="contact-card">
+    <div class="contact-card__avatar contact-card__avatar--logo">
+      <img src="/logos/github-mark-white.svg" alt="GitHub" />
+    </div>
     <div class="contact-card__name">Slides + Demo</div>
     <div class="contact-card__role contact-card__role--mono">github.com/dirien/agent-memory</div>
     <div class="contact-card__qr">
@@ -827,6 +1089,8 @@ harness that has to outlive the session.
   border: 2px solid var(--p-primary);
 }
 .contact-card__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.contact-card__avatar--logo { display: flex; align-items: center; justify-content: center; background: #24292f; }
+.contact-card__avatar--logo img { width: 60%; height: 60%; object-fit: contain; }
 .contact-card__name { font-size: 1.7rem; font-weight: 700; margin-top: 0.5rem; color: var(--p-fg); }
 .contact-card__role { font-size: 1.15rem; color: var(--p-fg-muted); }
 .contact-card__role--mono { font-family: var(--slidev-font-mono); font-size: 0.95rem; }
@@ -842,7 +1106,10 @@ harness that has to outlive the session.
 </style>
 
 <!--
-Closing slide. The QR codes come from api.qrserver.com at render time; if
+Closing slide. QR codes checked on 2026-10-06 by decoding them: LinkedIn
+https://www.linkedin.com/in/engin-diri/ and https://github.com/dirien/agent-memory.
+GitHub mark: public/logos/github-mark-white.svg (simple-icons path, white fill).
+The QR codes come from api.qrserver.com at render time; if
 the venue WiFi is bad, pre-render PNGs into public/ (that's the open task
 from the demo).
 Also link: github.com/jeffvestal/agent-memory and the three blog posts.
