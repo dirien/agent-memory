@@ -29,7 +29,7 @@ Create a `.env` file (see `.env.example`) with:
 # Memory
 bridge remember <type> <content> [--title T] [--tags t1,t2] [--scope shared] [--category C]
 bridge recall <query> [--type X] [--limit N] [--semantic|--keyword|--hybrid]
-bridge forget <memory_id>
+bridge forget <memory_id> [--superseded-by <new_id>]   # retire, don't delete
 bridge sync-memories [--force]   # Sync ~/.claude/projects/.../memory/*.md to ES
 
 # Messages
@@ -99,10 +99,13 @@ fallback/                 — offline queue; synced files go to .synced/
 | `agent-status` | Agent heartbeats |
 | `{agent}-entities` | Indexed markdown file entities |
 | `{agent}-entity-history` | Entity change history |
+| `agent-curation` | Memory-curation decisions: Jev's votes and the outcome per memory pair |
 
 ### Key Patterns
 
 **Offline resilience**: Every write goes through `fallback.sh`. When ES is unreachable, docs queue as JSON files in `fallback/{agent}/outbox/`. `bridge sync` or automatic post-write sync uploads them via bulk API and moves successes to `.synced/`.
+
+**Memory curation** (optional): with `typesafe_api_key` set, `infra/curation.tf` deploys a Kibana Workflow that runs every minute, asks TypeSafe Jev yes/no questions about each new memory and its three nearest older ones, and lets a Painless rule supersede, flag for review or link them. Every decision lands in `agent-curation`. Recall hides retired memories (`status: superseded`, `duplicate_of`).
 
 **Hybrid search**: Memory and entity searches use Reciprocal Rank Fusion (RRF) combining Jina v5 `semantic_text` fields with BM25 on title/content/tags. `--semantic`, `--keyword`, or `--hybrid` flags select the mode.
 

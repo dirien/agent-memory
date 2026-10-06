@@ -1,6 +1,6 @@
 <!-- FOR AI AGENTS - Human readability is a side effect, not a goal -->
 <!-- Managed by agent: keep sections and order; edit content, not structure -->
-<!-- Last updated: 2026-09-27 | Last verified: 2026-09-27 -->
+<!-- Last updated: 2026-10-06 | Last verified: 2026-10-06 -->
 
 # AGENTS.md
 
@@ -8,7 +8,8 @@
 
 Fork of `jeffvestal/agent-memory` (Elasticsearch as persistent memory for Claude Code) at
 `dirien/agent-memory`, extended for the talk "Give Your Coding Agent an (Elastic) Memory"
-(Elastic NYC meetup, 2026-10-06): Pulumi HCL backend, APM packaging, Docker Sandboxes kit, Slidev deck.
+(Elastic NYC meetup, 2026-10-06): Pulumi HCL backend, memory curation with TypeSafe Jev, APM packaging,
+Docker Sandboxes kit, Slidev deck.
 
 ## Commands (verified)
 > Source: scripts in this repo, `slides/package.json`, `.github/workflows/publish-kit.yaml`
@@ -19,6 +20,7 @@ Fork of `jeffvestal/agent-memory` (Elasticsearch as persistent memory for Claude
 | Memory status | `pulumi env run dirien/agent-memory/runtime -- ./bridge status` | ~3s |
 | Infra plan / apply | `scripts/pulumi.sh preview` / `scripts/pulumi.sh up` (sandbox: `AGENT_MEMORY_BACKEND=local`, already set here) | ~20s / 1-2 min |
 | Stack output | `scripts/pulumi.sh stack output dashboard_url` | ~3s |
+| Demo sandbox | `scripts/demo-sandbox.sh <name> <workspace>` (host only, plain bash; see `DEMO.md`) | ~1 min |
 | Kit validate | `sbx kit validate ./kit` (host or CI only; `sbx` is not in the sandbox) | ~2s |
 | Slides | see `slides/AGENTS.md` (`npm run dev`, `npm run build`) | ~2s build |
 
@@ -41,12 +43,14 @@ hooks/                  -> Claude Code hook scripts (SessionStart, PostToolUse, 
 .apm/                   -> APM primitives: hooks/agent-memory.json, skills/agent-memory/SKILL.md
 apm.yml                 -> APM package manifest (also declares the elastic-memory MCP server)
 infra/                  -> Pulumi HCL program (runtime: hcl): Serverless project, indices, API keys, dashboard, ESC env
+infra/curation.tf       -> memory curation: Jev .http connector (restapi) + Kibana Workflow; off without typesafe_api_key
+infra/workflows/        -> memory-curation.yaml (the workflow), NOTICE.md (questions adapted from jev-mem, invalidate)
 infra/esc/              -> template for the hand-made agent-memory/elastic-cloud ESC environment
 kit/                    -> Docker Sandboxes mixin kit (spec.yaml), published as ghcr.io/dirien/agent-memory-kit
-scripts/                -> pulumi.sh (backend wrapper), sbx-startup.sh (kit startup), push-kit.sh (publish)
+scripts/                -> pulumi.sh (backend wrapper), sbx-startup.sh (kit startup), push-kit.sh (publish), demo-sandbox.sh (DEMO.md)
 setup/dashboards/       -> Kibana dashboard JSON (source of truth for infra/dashboard.tf)
 slides/                 -> Slidev deck for the talk (own AGENTS.md)
-DEMO.md                 -> the demo runbook: two sandboxes, three acts, reset
+DEMO.md                 -> the demo runbook: three sandboxes (fri, mon, wed), four acts, reset
 .github/workflows/      -> publish-kit.yaml (validate + push kit on main and v* tags)
 ```
 
@@ -57,6 +61,7 @@ DEMO.md                 -> the demo runbook: two sandboxes, three acts, reset
 | ES\|QL query in bash | `lib/memory.sh` (`mem_recall`) | heredoc query, `jq -Rs` to JSON-encode, `es_request POST /_query` |
 | Pulumi HCL resource from outputs | `infra/esc.tf` | `stringasset(yamlencode(...))`, `$${...}` escapes ESC interpolation |
 | Kit spec | `kit/spec.yaml` | schema v2 mixin; argv-form startup; `KIT_REF` pinned, rewritten by `push-kit.sh` |
+| Kibana Workflow | `infra/workflows/memory-curation.yaml` | scheduled trigger; Jev via the `.http` connector; Painless `decide` step returns the outcome; every pair logged to `agent-curation` |
 
 ## Utilities (check before creating new)
 | Need | Use | Location |
@@ -75,6 +80,7 @@ DEMO.md                 -> the demo runbook: two sandboxes, three acts, reset
 | Changing `kit/`, `scripts/sbx-startup.sh` or hooks the kit installs | bump `version` + `KIT_REF` in `kit/spec.yaml`, tag `vX.Y.Z` after pushing |
 | Running Pulumi in this sandbox | `scripts/pulumi.sh`, not bare `pulumi` (see Key Decisions) |
 | Verifying memory data | ES\|QL via `pulumi env run ... -- curl .../_query` (see `DEMO.md` checks) |
+| Tuning curation | thresholds and questions in `infra/workflows/memory-curation.yaml` (`decide` step), `scripts/pulumi.sh up`, then check `outcome` in `agent-curation` |
 | Adding dependency | Ask first |
 
 ## Repository Settings
@@ -91,6 +97,9 @@ DEMO.md                 -> the demo runbook: two sandboxes, three acts, reset
 - Keys reach sandboxes as `sbx secret set-custom` placeholders (`sbx-cs-...`), resolved on the host from ESC; the proxy replaces only the placeholder.
 - Hooks, skill and MCP server are installed only at user scope (`apm install -g`) by the kit, never committed at project level: the workspace is shared with sandboxes that must not get them.
 - The MCP key is read-only (writes get 403); memories are written by `bridge` (Claude or hooks).
+- Memory curation is opt-in: with `typesafe_api_key` set (Pulumi config secret), `infra/curation.tf` creates a Kibana `.http` connector to Jev and a workflow that runs every minute. For each memory without `curated_at` it finds the three nearest older memories, asks Jev ten yes/no questions per pair, and a Painless rule decides (superseded, review, duplicate, subsumed, none). Jev votes; the thresholds in the workflow decide.
+- `elastic/elasticstack` can't create the `.http` connector, so it goes through `Mastercard/restapi` 3.0.0 on `terraform-provider` 1.4.0, pinned in `infra/sdks/restapi/hcl.sdk.json`.
+- Recall hides retired memories: `status: superseded` (curation or `bridge forget --superseded-by`), legacy `type: superseded`, and anything with `duplicate_of`. Nothing is deleted.
 
 ## Boundaries
 
@@ -106,17 +115,19 @@ DEMO.md                 -> the demo runbook: two sandboxes, three acts, reset
 
 ### Never Do
 - Add `Co-Authored-By` or any AI attribution trailer to commits (explicit owner instruction).
-- Print, echo or commit keys: `BRIDGE_ES_API_KEY`, `ELASTIC_MCP_API_KEY`, `EC_API_KEY`, the state passphrase.
+- Print, echo or commit keys: `BRIDGE_ES_API_KEY`, `ELASTIC_MCP_API_KEY`, `EC_API_KEY`, the state passphrase, the Jev key (`typesafe_api_key`).
 - Commit `.env`, `infra/.pulumi-state/`, `infra/Pulumi.local.yaml`, `.claude/settings.json`, `.claude/hooks/`, `.mcp.json`.
 - Run a project-level `apm install` in this repo (it would register the Elastic hooks for every sandbox on the workspace).
+- Commit `slides/public/memento-leonard.jpg` (a film still; gitignored, local only).
 
 ## Codebase State
-- `v0.2.2` is current: `ghcr.io/dirien/agent-memory-kit:v0.2.2` (also `latest`). Tags `v0.2.0`-`v0.2.2`; only `v0.2.0` has a GitHub release page.
-- The Serverless project `agent-memory` (aws-us-east-1) is live and billed; indices were wiped after the last test run.
+- Kit: `:latest` is published from `main` with `KIT_REF` pinned to that commit; the demo uses it (`scripts/demo-sandbox.sh`). The last tag, `v0.2.2`, predates memory curation. Tags `v0.2.0`-`v0.2.2`; only `v0.2.0` has a GitHub release page.
+- The Serverless project `agent-memory` (aws-us-east-1) is live and billed, with curation on (20 resources); indices were wiped after the last test run.
+- A second project, `agent-memory-curation-test`, is still live and billed: stack in the `.worktrees/memory-curation` worktree, ESC `dirien/agent-memory/runtime-test`. Destroy it once the talk is done.
 - ESC: `dirien/agent-memory/elastic-cloud` (hand-made: `EC_API_KEY`, state passphrase, legacy `mcp.*` copies) and `dirien/agent-memory/runtime` (Pulumi-managed).
 - This build sandbox has no Elastic hooks by design; demo sandboxes get them from the kit.
 - Known upstream lint warning: `lib/tasks.sh` `task_suspend_active` assigns an unused `suspended` variable.
-- `slides/slides.md` is a draft outline written before the demo worked; see `slides/AGENTS.md`.
+- `slides/slides.md` is the talk deck (38 slides, ~30 min of noted timing); see `slides/AGENTS.md`.
 
 ## Terminology
 | Term | Means |
@@ -126,7 +137,10 @@ DEMO.md                 -> the demo runbook: two sandboxes, three acts, reset
 | placeholder | `sbx-cs-...` value a sandbox sees instead of a key; the sbx proxy swaps it on the way out |
 | kit | `kit/spec.yaml`, the elastic-memory Docker Sandboxes mixin |
 | build sandbox | the sandbox this repo is developed in (no Elastic hooks) |
-| demo sandbox | a sandbox created with the kit (`mem-a`, `mem-b` in `DEMO.md`) |
+| demo sandbox | a sandbox created with the kit (`fri`, `mon`, `wed` in `DEMO.md`) |
+| curation | the Kibana Workflow that supersedes, flags or links memories a newer one contradicts (`infra/curation.tf`) |
+| Jev | TypeSafe AI's "System One" model: answers fixed-choice questions with probabilities; the curation workflow's judge |
+| retired memory | `status: superseded` or `duplicate_of` set; hidden from recall, still in the index |
 
 ## Scoped AGENTS.md (MUST read when working in these directories)
 - [slides/AGENTS.md](./slides/AGENTS.md): the Slidev deck, talk facts, style conventions, verified story material.

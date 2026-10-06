@@ -6,13 +6,15 @@ on Elastic Cloud Serverless:
 | Resource | Provider | What for |
 |---|---|---|
 | `ec_elasticsearch_project` | `elastic/ec` | the Serverless project (Elasticsearch + Kibana) |
-| `elasticstack_elasticsearch_index` ×7 | `elastic/elasticstack` | `agent-memory`, `agent-messages`, `agent-sessions`, `agent-tasks`, `agent-status`, `<agent>-entities`, `<agent>-entity-history`; `semantic_text` fields use Jina v5 on the Elastic Inference Service |
+| `elasticstack_elasticsearch_index` ×8 | `elastic/elasticstack` | `agent-memory`, `agent-messages`, `agent-sessions`, `agent-tasks`, `agent-status`, `<agent>-entities`, `<agent>-entity-history`, and `agent-curation` (the curation workflow's decision log); `semantic_text` fields use Jina v5 on the Elastic Inference Service |
 | `elasticstack_elasticsearch_security_api_key` | `elastic/elasticstack` | a key scoped to those indices, for the `bridge` CLI |
 | `elasticstack_kibana_dashboard` | `elastic/elasticstack` | the Agent Memory overview, built from `setup/dashboards/agent-memory-overview.json` |
 | `pulumiservice_environment` | `pulumi/pulumiservice` | the `<org>/agent-memory/runtime` ESC environment: settings and both keys for agents, instead of `.env` files |
 | `elasticstack_elasticsearch_security_api_key` (`mcp`) | `elastic/elasticstack` | a read-only key for Kibana's Agent Builder MCP server (`feature_agentBuilder.read` + `read` on the memory indices) |
+| `restapi_object` (`jev_connector`) | `Mastercard/restapi` | Kibana `.http` connector to TypeSafe Jev, key in its encrypted secret headers; only with `typesafe_api_key` |
+| `elasticstack_kibana_agentbuilder_workflow` (`curation`) | `elastic/elasticstack` | the memory-curation workflow from `workflows/memory-curation.yaml`, every minute; only with `typesafe_api_key` |
 
-Both providers are Terraform providers. Pulumi HCL pulls them from the OpenTofu
+`ec`, `elasticstack` and `restapi` are Terraform providers. Pulumi HCL pulls them from the OpenTofu
 registry and bridges them on the fly; `pulumi install` records that in
 `sdks/*/hcl.sdk.json` (checked in).
 
@@ -91,6 +93,7 @@ field can take a few seconds while the inference endpoint warms up.
 | `esc_organization` | (required) | Pulumi Cloud org that owns the runtime ESC environment |
 | `esc_project`, `esc_environment` | `agent-memory`, `runtime` | its project and name |
 | `embedding_inference_id` | `.jina-embeddings-v5-text-small` | inference endpoint behind the `semantic_text` fields |
+| `typesafe_api_key` (secret) | `""` | TypeSafe Jev key; set it (`scripts/pulumi.sh config set --secret typesafe_api_key`) to deploy memory curation, leave it empty to skip it |
 
 ## Tear down
 
@@ -110,6 +113,10 @@ pass along with the project.
   ([pulumi/pulumi-terraform-provider#117](https://github.com/pulumi/pulumi-terraform-provider/issues/117)).
   Don't run `pulumi install` here until that's fixed: it re-resolves the plugin to 1.4.0
   and fails.
+- `Mastercard/restapi` 3.0.0 runs on `terraform-provider` 1.4.0, pinned in
+  `sdks/restapi/hcl.sdk.json`. It creates the one Kibana object `elasticstack`
+  can't: the `.http` connector that workflow `http` steps call out through
+  (its connector map ends at `.webhook`).
 - The project's admin credentials only exist in state (as secrets) and are
   used by the `elasticstack` provider. Nothing outside the stack gets them.
 - Kibana's dashboards API no longer accepts a `treemap` panel, so "Memory by
