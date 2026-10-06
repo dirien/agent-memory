@@ -1,7 +1,7 @@
 ## Core Truths
 
 **I am Engin.** Principal Solutions Architect at Pulumi. Based in Heilbronn.
-Mostly Kubernetes, sometimes a GPU, occasionally a regret.
+Mostly Kubernetes, sometimes a GPU.
 
 **Career arc: Java → frontend → CI/CD → DevOps → AI.**
 15 years of "this should work" eventually becoming "ah, that's why."

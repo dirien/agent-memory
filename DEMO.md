@@ -1,11 +1,26 @@
-# Demo runbook: two sandboxes, one memory
+# Demo runbook: a bug you only debug once
 
-The story: on **Friday** you work with Claude in sandbox `mem-a`. It learns a
-constraint and you leave a task half done. On **Monday** you open a brand-new
-sandbox `mem-b`: new container, new home directory, so Claude's local
-auto-memory is empty. Claude still knows the constraint and finds the open task,
-because both live in Elasticsearch. Then you ask the same memory questions
-through the Elastic MCP server, without the `bridge` CLI.
+The story is ordinary developer work on a real codebase, this repo:
+
+- **Friday**, sandbox `fri`: you notice `bridge recall --keyword` ranks a
+  months-old memory above last week's. Claude finds out why (only hybrid
+  recall applies the time decay), you're about to leave, so it keeps the
+  finding and opens a task.
+- **Monday**, sandbox `mon`: a new machine, so a new container, a new home
+  directory and empty auto-memory. "Let's fix the recall ranking issue from
+  Friday" goes straight to the fix: the open task is in the session's context
+  and the root cause comes back with one recall. No re-investigation.
+- **Wednesday**, sandbox `wed`: the Friday finding is no longer true. Either
+  Claude retired it with `forget --superseded-by` on Monday, or the
+  memory-curation workflow did within a minute (Jev votes, Painless decides).
+  "Does keyword recall look at age?" gets today's answer, not Friday's.
+- Finally the same memory over the Elastic MCP server, and Kibana.
+
+Nothing is scripted into the memory: the facts are real (`lib/memory.sh`
+applies `DECAY` only in the hybrid ES|QL path; `--keyword` sorts by score with
+`updated_at` as a tie-break, `--semantic` ignores age), and Claude stores them
+because the agent-memory skill tells it to. Don't fix this in `main` before
+the talk, or Friday has nothing to find.
 
 ## 0. Before you start (host)
 
@@ -24,111 +39,120 @@ sbx secret set-custom --host '*.es.us-east-1.aws.elastic.cloud' --env BRIDGE_ES_
 sbx secret set-custom --host '*.kb.us-east-1.aws.elastic.cloud' --env ELASTIC_MCP_API_KEY \
   --command "$PULUMI_BIN env get $E elastic.mcpApiKey --value string --show-secrets | tr -d '\n'"
 
-# Settings aren't secret; pass them at creation.
-v() { pulumi env get "$E" "elastic.$1" --value string; }
-MEM_ENV=(--env BRIDGE_ES_URL="$(v esUrl)" --env BRIDGE_AGENT_ID="$(v agentId)" --env ELASTIC_KIBANA_HOST="$(v kibanaHost)")
-KITS=(--kit ghcr.io/dirien/infrastructure-kit:v0.10.5 --kit ghcr.io/dirien/agent-memory-kit:v0.2.2)
-
-mkdir -p /tmp/nyc-demo           # any project; the kit brings agent-memory itself
+# The project Claude works on: a fresh clone of this repo
+rm -rf ~/demo/agent-memory && git clone -q https://github.com/dirien/agent-memory ~/demo/agent-memory
+cd ~/workshops/give-your-coding-agent-an-elastic-memory   # for scripts/demo-sandbox.sh
 ```
 
 If a `set-custom` says the variable already exists, the secret is set from an
 earlier run; keep it, or repoint it as described in
 [`kit/README.md`](kit/README.md#run-it).
 
-The Elasticsearch indices start empty (see Reset). There are no `.env` files
-anywhere.
+`scripts/demo-sandbox.sh <name> <workspace>` creates each sandbox with the
+settings from `$E` and the kits (`KIT` defaults to
+`ghcr.io/dirien/agent-memory-kit:latest`, whose `KIT_REF` is pinned to the
+commit it was published from). It's plain bash, so zsh can't trip over it.
+
+The backend has the memory-curation workflow deployed (`infra/curation.tf`,
+needs `typesafe_api_key` in the stack config): it runs every minute and
+supersedes, links or flags memories that a newer one contradicts. The indices
+start empty (see Reset).
 
 Exit every Claude session with `/exit`: that runs the SessionEnd hook. Detaching
 (`Ctrl-\`) leaves the session running and does not.
 
-## Act 1: Friday, sandbox `mem-a`
+## Act 1: Friday, sandbox `fri`
 
 ```bash
-sbx create --name mem-a --skills=off "${MEM_ENV[@]}" "${KITS[@]}" claude /tmp/nyc-demo
-sbx run --name mem-a
+scripts/demo-sandbox.sh fri ~/demo/agent-memory && sbx run --name fri
 ```
 
 Smoke checks in the new session (prefix with `!` to run them in the shell):
 
 ```text
-! bridge status                  # online, 7 indices; agent-status has the session's heartbeat
+! bridge status                  # online, exit 0
 ! echo "$BRIDGE_ES_API_KEY"       # sbx-cs-… placeholder, not the key
 /mcp                             # elastic-memory connected
 ```
 
-Then give Claude this prompt:
+```text
+I noticed `bridge recall --keyword` ranks a months-old memory above one from last week, while plain `bridge recall` gets the order right. Find out why. Don't change any code, I'm about to head out.
+```
+
+Expected: Claude reads `lib/memory.sh` and explains that only the hybrid
+ES|QL path multiplies the score by `DECAY(created_at, ...)`; `--keyword` sorts
+by `_score` with `updated_at` only as a tie-break, and `--semantic` has no
+recency at all.
 
 ```text
-I'm preparing my talk "Give Your Coding Agent an (Elastic) Memory" for the Elastic NYC meetup on October 6.
-Two things for later sessions:
-1. The venue WiFi is unreliable, so every live demo step needs a pre-recorded fallback video. Treat that as a hard constraint for the demo.
-2. Track a task: pre-render the QR codes on the Resources slide as PNGs. I'll do the actual work in a later session, so leave it open.
-Don't change any files in the repository.
+Good find. I'll fix it on Monday, keep what you found and leave the fix as an open task.
 ```
 
-Claude stores the constraint with `bridge remember` and starts the task with
-`bridge task start`. When it's done, `/exit`: the SessionEnd hook logs the
-session end and suspends the task.
+Expected: one `bridge remember` with the root cause (file and lines) and a
+`bridge task start`. Then `/exit`: the SessionEnd hook suspends the task.
 
-**Check** (from any shell with the runtime environment, or over MCP):
+## Act 2: Monday, sandbox `mon`
 
-```sql
-// 1 memory, source bridge-cli (or auto-memory if Claude used its own memory)
-FROM agent-memory | KEEP created_at, type, source, title
-// 1 task, status suspended
-FROM agent-tasks | KEEP task_id, status, title, machine
-// task created, session-end (prompt_input_exit), task suspended
-FROM agent-sessions | KEEP timestamp, action, summary, machine | SORT timestamp
-```
-
-## Act 2: Monday, sandbox `mem-b`
-
-Same command, new name. The project folder is the same; the home directory, and
-with it Claude's local auto-memory, is not.
+Same project folder, new machine:
 
 ```bash
-sbx create --name mem-b --skills=off "${MEM_ENV[@]}" "${KITS[@]}" claude /tmp/nyc-demo
-sbx run --name mem-b
+scripts/demo-sandbox.sh mon ~/demo/agent-memory && sbx run --name mon
 ```
 
 ```text
-regarding my prep for the talk, how was the wifi?
+Let's fix the recall ranking issue from Friday.
 ```
 
-Expected: one `bridge recall`, then the constraint in Claude's own words: the
-venue WiFi is unreliable, so every live demo step needs a pre-recorded fallback
-video. `recall` prints each memory's content, not just its title.
+Expected: the suspended task is already in the session's context; one
+`bridge recall` brings back Friday's root cause, and Claude goes straight to
+`lib/memory.sh`: a time decay on `created_at` (the same
+`BRIDGE_MEMORY_DECAY_WINDOW`) for the `--keyword` and `--semantic` queries,
+checked with `./bridge recall --keyword`. It closes the task and remembers the
+new state. Talk over the edit; it takes a minute or two.
+
+Then `/exit`. Within about a minute Friday's finding is superseded: by Claude
+(`bridge forget <id> --superseded-by <id>`, as the skill says) or by the
+curation workflow.
+
+## Act 3: Wednesday, sandbox `wed`
+
+```bash
+scripts/demo-sandbox.sh wed ~/demo/agent-memory && sbx run --name wed
+```
 
 ```text
-And what's still open from that session?
+Before I touch recall: do --keyword and --semantic take a memory's age into account?
 ```
 
-Expected: the suspended QR task with its ID. The SessionStart hook already put
-the open tasks into the session's context, so Claude answers without searching.
+Expected: yes, since Monday's fix, and nothing about Friday's "only hybrid
+decays", because recall hides superseded memories.
 
-## Act 3: the same memory over MCP (still in `mem-b`)
+## Act 4: the same memory over MCP (still in `wed`)
 
 ```text
-Use only the elastic-memory MCP server, not the bridge CLI or Bash. Run ES|QL to show (1) every memory with its type, source and title, and (2) tasks grouped by status. Reply with two small markdown tables and the exact ES|QL queries you ran.
+Use only the elastic-memory MCP server, not the bridge CLI or Bash. Show the memories about recall ranking with their status and superseded_by, and the agent-curation decisions with their outcome.
 ```
 
-Expected: `elastic-memory` calls only (usually Generate ES|QL, then Execute
-ES|QL), and tables matching Act 1. Then open the Kibana dashboard to show the
-same data (`scripts/pulumi.sh stack output dashboard_url` from the clone).
+Expected: `elastic-memory` calls only; Friday's finding with
+`status=superseded` and `superseded_by` pointing at Monday's memory. If the
+curation workflow did it, `agent-curation` has the pair with
+`outcome=superseded` and Jev's votes. Then the Kibana dashboard
+(`AGENT_MEMORY_BACKEND=local scripts/pulumi.sh stack output dashboard_url` in
+this checkout, which holds the stack state; not in `~/demo`).
 
 ## Reset
 
 ```bash
 /exit                                   # in each session
-sbx rm mem-a mem-b
+sbx rm fri mon wed
+rm -rf ~/demo/agent-memory && git clone -q https://github.com/dirien/agent-memory ~/demo/agent-memory
 ```
 
-Wipe the indices before the talk (from the agent-memory clone, keys from ESC):
+Wipe the indices before the talk (from this repo, keys from ESC):
 
 ```bash
 pulumi env run dirien/agent-memory/runtime -- bash -c '
-  for idx in agent-memory agent-messages agent-sessions agent-tasks agent-status claude-entities claude-entity-history; do
+  for idx in agent-memory agent-messages agent-sessions agent-tasks agent-status agent-curation claude-entities claude-entity-history; do
     curl -s -X POST -H "Authorization: ApiKey $BRIDGE_ES_API_KEY" -H "Content-Type: application/json" \
       "$BRIDGE_ES_URL/$idx/_delete_by_query?refresh=true" -d "{\"query\":{\"match_all\":{}}}"
   done'
@@ -139,12 +163,15 @@ pulumi env run dirien/agent-memory/runtime -- bash -c '
 - Each request through the sandbox proxy takes about a second, so the task shows
   as `suspended` a few seconds after `/exit`, and a new write needs a moment
   before search sees it.
+- The curation workflow runs every minute and only judges memories without
+  `curated_at`; each new memory is compared with its three nearest older
+  neighbours. Every decision lands in `agent-curation` with its `outcome`.
 - Who wrote what: `source: bridge-cli` memories come from Claude calling
   `bridge remember`, `source: auto-memory` ones from the hooks syncing Claude's
   own memory files. The MCP key is read-only; a write with it gets `403`.
-- With a single memory in the index, semantic recall returns it for any query:
-  the nearest neighbour always comes back.
 - Printing `BRIDGE_ES_API_KEY` or `ELASTIC_MCP_API_KEY` shows the `sbx-cs-…`
   placeholder. That's the point; there is nothing to rotate.
 - If `elastic-memory` doesn't connect (no `ELASTIC_KIBANA_HOST` or placeholder
   in the environment), Claude falls back to the `bridge` CLI on its own.
+- The fix Claude writes on Monday is real but stays in `~/demo/agent-memory`;
+  Reset throws it away so Friday has something to find next time.

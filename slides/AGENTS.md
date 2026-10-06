@@ -1,6 +1,6 @@
 <!-- FOR AI AGENTS - Human readability is a side effect, not a goal -->
 <!-- Managed by agent: keep sections and order; edit content, not structure -->
-<!-- Last updated: 2026-09-30 | Last verified: 2026-09-30 -->
+<!-- Last updated: 2026-10-06 | Last verified: 2026-10-06 -->
 
 # AGENTS.md: slides/
 
@@ -35,11 +35,15 @@ start, delete `node_modules` and run the install again.
 ## Structure
 ```
 slides.md          -> the deck (one file)
-style.css          -> overlay on @pulumi/slidev-theme: +40% font size, h1 pinned top, .big-code/.code-lg/.code-xl, .mem-card/.mem-caption, .meme-slide/.meme-frame, .soul-slide; story slides: .term-grid, .stat, .takeaway, .quote-card, .timeline, .cmp, .why-grid, .hcl-grid, .memento
+style.css          -> overlay on @pulumi/slidev-theme: +40% font size, h1 pinned top, .big-code/.code-lg/.code-xl, .mem-card/.mem-caption, .meme-slide/.meme-frame, .soul-slide; story slides: .term-grid, .stat, .takeaway, .quote-card, .timeline, .cmp, .why-grid(--two), .hcl-grid, .memento, .diagram-frame(--strip), .stat-row, .step-row, .qr-corner
+diagrams/*.mmd     -> Mermaid sources of the Excalidraw diagrams in public/diagrams/*.svg
+diagrams/render/   -> mermaid-to-excalidraw renderer (headless Chromium); see its README to regenerate
 snippets/soul.md   -> the SOUL.md intro slide content (reused from the GPU talk)
 snippets/infra     -> symlink to ../../infra; Slidev refuses snippet paths outside slides/, so import infra code as <<< @/snippets/infra/<file>.tf hcl
 public/fonts/      -> Inter + Monaspace Neon
-public/logos/      -> Pulumi logos (dark/light)
+public/logos/      -> Pulumi logos (dark/light), TypeSafe AI wordmark (slide 24), GitHub mark (Resources)
+public/diagrams/   -> Excalidraw SVGs (architecture, recall, curation), generated from diagrams/*.mmd
+public/memento-leonard.jpg -> film still for the Memento slides; local only, gitignored (public repo)
 ```
 Theme: `@pulumi/slidev-theme` 0.4.0 (layouts: cover, default, section, two-cols, image-left, image-right, code, diagram, diagram-left, diagram-right, quote, statement, end). Mermaid is pinned to v11 because the theme's Mermaid styling targets v11.
 
@@ -53,12 +57,13 @@ Reference: `dirien/stop-wasting-gpus-how-we-built-a-golden-path-for-gpu-sharing-
 - Close: `Q&A`, `Thanks.`, `Resources` (contact cards + QR codes).
 
 ## Draft status
-Story arc (2026-09-30): Friday/Monday. The opening shows Monday failing, the demo replays it working. Acts: amnesia → three fixes everyone tries (keep the session, CLAUDE.md, auto memory) → second brains and Karpathy's LLM wiki → "Memory is a search problem" → where each memory lives, agent-memory, ES|QL recall, why Elasticsearch (reason → benefit), when you don't need it → Pulumi, sandbox, hooks → demo → what broke, wrong memories spread, close. Don't cite third-party YouTube creators on slides.
+Story arc (2026-10-05): opening Friday/Monday → amnesia → three fixes everyone tries → second brains and Karpathy's LLM wiki → "Memory is a search problem" → where each memory lives, agent-memory, ES|QL recall, why Elasticsearch, when you don't need it → **keeping memory true** (a wrong memory reaches every agent; System 2 writes, System 1 decides; curation diagram; Jev votes, Painless decides; why Jev; typed isn't true) → Pulumi (incl. the restapi connector slide) → demo (DEMO.md: a bug you only debug once; the sandboxes and placeholder keys are explained in its intro) → what broke → close. Don't cite third-party YouTube creators on slides. ~30 min of noted timing.
 Open items:
-- Slide 3 (Friday/Monday) replies are reconstructed; replace with real screenshots from a sandbox without the kit, or the owner's own story.
-- Slides 5-7: the Memento still (`public/memento-leonard.jpg`, from srcdn.com) with our Polaroid overlaid; overlay coordinates in `style.css` (`.memento__*`) are measured on that 1400x700 image, so re-measure if you swap it.
+- Slide 3 (Friday/Monday) and the Memento captions still tell the WiFi story; the demo is now the recall-ranking bug. Align them or keep the WiFi hook.
+- Slide 3 replies are reconstructed; replace with real screenshots.
+- Slides 5-7: the Memento still (`public/memento-leonard.jpg`, from srcdn.com) is local only, not committed (public repo).
 - Check ES|QL `DECAY`'s default function (linear vs exp) before calling it a forgetting curve.
-- Resources QR codes load from `api.qrserver.com` at render time; the demo constraint says pre-render them as PNGs into `public/`.
+- QR codes (slide 17 and Resources) load from `api.qrserver.com` at render time; targets decoded and verified 2026-10-06. Pre-render them as PNGs into `public/` if the venue WiFi is bad.
 - `infra/main.tf` carries `# #region project` / `# #region provider` markers for the HCL slide; keep them when editing that file.
 
 ## Verified story material (use these, don't invent numbers)
@@ -77,7 +82,7 @@ Open items:
 | Title-only recall | a fresh sandbox found the right memory but only saw its title; recall now prints content, SessionStart lists open tasks | `7cde8a3`, `3462297` |
 | Placeholder mistaken for a leak | Claude called `sbx-cs-...` a live credential; the hook now says it's a placeholder | `76515b9` |
 | Who writes what | Claude via `bridge remember` (`source: bridge-cli`), hooks via auto-memory sync (`source: auto-memory`); MCP key is read-only, write = 403 | `../DEMO.md` |
-| Stack size | 16 resources: Serverless project, 7 indices, 2 API keys, dashboard, ESC env, 3 providers, stack | `scripts/pulumi.sh preview` |
+| Stack size | 20 resources with curation on: Serverless project, 8 indices (the bridge's 7 + `agent-curation`), 2 API keys, dashboard, ESC env, Jev connector, curation workflow, 4 providers, stack | `scripts/pulumi.sh stack` (2026-10-06) |
 | MCP surface | Kibana Agent Builder MCP server exposes 22 tools; demo uses execute/generate ES\|QL | `tools/list` on the endpoint |
 
 Credit the base project: agent-memory by Jeff Vestal (Elastic), `github.com/jeffvestal/agent-memory`.

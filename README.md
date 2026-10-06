@@ -13,6 +13,7 @@ Claude Code agents are stateless between sessions. agent-memory gives them a sha
 - **Inter-agent messaging** — typed messages between agents across machines, with thread support and priority
 - **Task tracking** — full lifecycle from `created` through `completed` or `failed`, with notes and outcomes
 - **Offline resilience** — writes queue locally when Elasticsearch is unreachable; `bridge sync` flushes them when connectivity returns
+- **Memory curation** (optional, this fork) — a Kibana Workflow checks every new memory against its nearest older ones with [TypeSafe Jev](https://typesafe.ai) and retires the ones it contradicts, so recall stops returning yesterday's truth
 
 ### Why this matters for context
 
@@ -22,7 +23,8 @@ Recalling a stored memory costs a single search query. The alternative is loadin
 
 This fork of [jeffvestal/agent-memory](https://github.com/jeffvestal/agent-memory) adds:
 
-- **`infra/`**: a [Pulumi HCL](https://www.pulumi.com/docs/iac/languages-sdks/hcl/) program that creates the Elasticsearch Serverless project, the seven indices, two scoped API keys, the Kibana dashboard, and a Pulumi ESC environment (`<org>/agent-memory/runtime`) holding everything an agent needs at runtime. No `.env` files.
+- **`infra/`**: a [Pulumi HCL](https://www.pulumi.com/docs/iac/languages-sdks/hcl/) program that creates the Elasticsearch Serverless project, the indices, two scoped API keys, the Kibana dashboard, and a Pulumi ESC environment (`<org>/agent-memory/runtime`) holding everything an agent needs at runtime. No `.env` files.
+- **Memory curation** (`infra/curation.tf`, `infra/workflows/`): with a Jev API key in the stack config, a Kibana Workflow supersedes, flags or links memories that a newer one contradicts. See [Memory curation](#memory-curation).
 - **APM packaging** (`apm.yml`, `.apm/`): the Claude Code hooks, an `agent-memory` skill and the `elastic-memory` MCP server ship as an [APM](https://github.com/microsoft/apm) package, so `apm install -g` wires them into the agent that should remember, instead of hand-edited `settings.json`.
 - **`kit/`**: a [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/) kit, published as `ghcr.io/dirien/agent-memory-kit`, that gives a Claude Code sandbox the memory in any project, with the keys kept out of the sandbox.
 - Fixes so `bridge` runs on Linux (the sandbox) as well as macOS, so synced auto-memories keep their body and type, and so hybrid recall and the dashboard work on current Serverless.
@@ -190,6 +192,7 @@ Copy `.env.example` to `.env` (or let `install.sh` create it).
 │  agent-status            │
 │  {agent}-entities        │
 │  {agent}-entity-history  │
+│  agent-curation          │
 └─────────────┬────────────┘
               │
    ┌──────────┴─────────────────────────────┐
@@ -205,6 +208,22 @@ Copy `.env.example` to `.env` (or let `install.sh` create it).
 **Offline queue** — when Elasticsearch is unreachable, every write lands in `fallback/{agent}/outbox/` as a JSON file. `bridge sync` uploads the queue via bulk API when connectivity returns.
 
 **Auto-memory sync** — on `SessionStart`, `bridge sync-memories` reads `~/.claude/projects/<cwd>/memory/*.md`, hashes each file, and re-indexes only changed files into `agent-memory`.
+
+### Memory curation
+
+A store that keeps everything also keeps what stopped being true. With
+`typesafe_api_key` set in the stack config, `infra/curation.tf` deploys a Kibana
+Workflow (`infra/workflows/memory-curation.yaml`) that runs every minute:
+
+1. It picks up memories without `curated_at` and finds the three nearest older memories with semantic search.
+2. For each pair it asks [TypeSafe Jev](https://typesafe.ai) ten yes/no questions (same subject? outdated? only a plan? only an exception?) and gets probabilities back.
+3. A Painless rule turns the votes into an outcome: `superseded`, `review`, `duplicate`, `candidate_subsumed`, `new_subsumed` or `none`, and applies it to the memories.
+4. Every pair, with Jev's votes and the outcome, lands in `agent-curation`.
+
+Recall hides retired memories (`status: superseded`, `duplicate_of`); nothing is
+deleted. Claude can retire one itself with `bridge forget <id> --superseded-by <new_id>`.
+Without a key the connector and the workflow aren't created. The questions are
+adapted from jev-mem (MIT) and invalidate (Apache-2.0), see `infra/workflows/NOTICE.md`.
 
 **Entity indexing** — the `PostToolUse` hook calls `bridge entity index-file` on every markdown write. Entity IDs are `{agent}-{type}-{slug}`, so re-indexing is idempotent.
 
