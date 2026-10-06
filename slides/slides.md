@@ -657,45 +657,6 @@ only answers the question we ask, from options we define, quickly.
 
 ---
 
-# Two ways to think.
-
-<table class="cmp sys-table !mt-2">
-<thead>
-<tr><th></th><th class="cmp-es">System 1</th><th>System 2</th></tr>
-</thead>
-<tbody>
-<tr><td>How it works</td><td class="cmp-es">fast and automatic, no effort</td><td>slow and deliberate, takes effort</td></tr>
-<tr v-click><td>In people</td><td class="cmp-es">2 + 2 = ?<br/>completing "bread and …"</td><td>17 × 24<br/>filling out a tax form</td></tr>
-<tr v-click><td>In models</td><td class="cmp-es">reads a situation and picks from answers you allowed</td><td>writes its answer word by word and can say anything</td></tr>
-<tr v-click><td>In agent memory</td><td class="cmp-es">checks whether an old memory still holds</td><td>writes the code and the memories</td></tr>
-</tbody>
-</table>
-
-<p class="stat-source">Terms from Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011)</p>
-
-<p v-click class="takeaway text-center !mt-4">Checking an old memory is a quick yes-or-no question: System 1 work.</p>
-
-<!--
-~60s. One row per click. The terms come from Daniel Kahneman's Thinking,
-Fast and Slow. [click] System 1 is the part of you that knows 2 + 2 without
-trying. System 2 is the part that
-has to sit down and work out 17 × 24. [click] Claude, like every LLM, works like
-System 2: it writes its answer word by word, takes seconds, and can say
-anything. [click] Most of what a coding agent does is that kind of work, including
-writing memories. Deciding whether an old memory still holds is different:
-it's a quick yes or no, and that's the kind of question a System 1 model is
-for. [click] the takeaway.
-Fact-check: Kahneman, ch. 1, reprinted by Scientific American (2012):
-"System 1 operates automatically and quickly, with little or no effort and no
-sense of voluntary control"; "System 2 allocates attention to the effortful
-mental activities that demand it". "Answer to 2 + 2 = ?" and "Complete the
-phrase 'bread and . . .'" are in the System 1 list, "Fill out a tax form" in
-the System 2 list; 17 × 24 is the chapter's "prototype of slow thinking".
-scientificamerican.com/article/kahneman-excerpt-thinking-fast-and-slow/
--->
-
----
-
 <div class="absolute inset-0 flex flex-col justify-center items-center px-20 text-center">
   <img src="/logos/typesafe-ai.svg" alt="TypeSafe AI" class="!h-[7rem] !w-auto !mb-14" />
   <h1 class="!text-[8rem] !leading-tight !font-semibold !tracking-tight !m-0">Enter <span class="text-[var(--p-primary)]">Jev!</span></h1>
@@ -751,6 +712,41 @@ same subject 0.91; re-run 2026-10-06 with the workflow's questions: 0.95, 0.87; 
 
 ---
 
+# Jev is not an LLM.
+
+<div class="layer-stack">
+  <img src="/diagrams/system1.svg" alt="System 1, thinking fast, Jev: input goes to a noul, choice or score answer. It outputs decisions, in one parallel pass of 70 to 500 ms, and picks only from your options." />
+  <img v-click src="/diagrams/system2.svg" alt="System 2, thinking slow, Claude, GPT and other LLMs: input becomes free-form text. It outputs text, token by token over seconds to minutes, and can say anything." />
+</div>
+
+<!--
+~60s. The terms are Daniel Kahneman's, from Thinking, Fast and Slow. System 1
+is the part of you that knows 2 + 2 without trying: fast, automatic, it picks
+an answer. Jev works like that: you give it the options (a yes/no they call a
+noul, a choice, a score) and it returns how likely each one is, in one pass.
+[click] System 2 is the part that has to sit down for 17 × 24. Claude, GPT and
+every other LLM work like that: they write their answer token by token, take
+seconds to minutes, and can say anything. Most of what a coding agent does is
+System 2 work, including writing memories. Checking whether an old memory
+still holds is a quick yes-or-no question: System 1 work.
+Fact-check: TypeSafe launch post (typesafe.ai/blog/introducing-system-one-models-and-jev,
+2026-09-15): "Jev outputs all probabilities in parallel instead of
+autoregressively generating by token"; "End-to-end response time is
+70ms-500ms for TypeSafe" against "3 to 329 seconds for frontier models"
+(the company's own numbers); "a key difference between our models and LLMs".
+Question types noul/choice/score: docs.typesafe.ai/introduction.
+Diagram: diagrams/system1-vs-2.mjs, rendered with diagrams/render/render-scene.mjs.
+Fact-check: Kahneman, ch. 1, reprinted by Scientific American (2012):
+"System 1 operates automatically and quickly, with little or no effort and no
+sense of voluntary control"; "System 2 allocates attention to the effortful
+mental activities that demand it". "Answer to 2 + 2 = ?" and "Complete the
+phrase 'bread and . . .'" are in the System 1 list, "Fill out a tax form" in
+the System 2 list; 17 × 24 is the chapter's "prototype of slow thinking".
+scientificamerican.com/article/kahneman-excerpt-thinking-fast-and-slow/
+-->
+
+---
+
 # Every new memory meets its nearest older ones.
 
 <div class="diagram-frame !mt-2">
@@ -766,6 +762,41 @@ Jev never decides which memory is newer; the search only ever returns older
 ones. Recall then skips anything marked superseded.
 Fact-check: infra/workflows/memory-curation.yaml, infra/curation.tf.
 Diagram: diagrams/curation.mmd, drawn with mermaid-to-excalidraw.
+-->
+
+---
+
+# Jev answers in three shapes.
+
+<div class="layer-stack layer-stack--wide">
+  <img src="/diagrams/shapes1.svg" alt="True or false, a noul: a probability between 0 and 1. Is this urgent? 0.95." />
+  <img v-click src="/diagrams/shapes2.svg" alt="Pick one option, a choice: billing, sales, support or other. Which team? billing." />
+  <img v-click src="/diagrams/shapes3.svg" alt="A number on a scale, a score on three described levels: cosmetic, workaround, blocking. How severe is this bug? 1.43, between workaround and blocking." />
+</div>
+
+<p v-click class="takeaway text-center">Every answer carries its probability, and Jev never answers outside your options.</p>
+
+<!--
+~45s. The three kinds of question Jev answers. A noul is a yes/no question,
+and the answer is a probability: "is this urgent?" 0.95. [click] A choice
+picks one option from your list, with a probability for each. [click] A
+score rates the situation on levels you describe. TypeSafe's own example:
+cosmetic, a workaround exists, blocking. 1.43 means somewhere between the
+last two, because the answer is a position, not a pick. [click] Whatever you ask, the answer
+comes with its probability, and it can only be one of the options you
+defined. The curation workflow only uses the first kind: ten nouls per
+memory pair. That's the next slide.
+Fact-check: docs.typesafe.ai/introduction: Choice "Choose an option from a
+list" returns choice, probabilities, confidence; Score "Score the state on a
+rubric" returns score, probabilities, confidence; Noul "Is this statement
+true?" returns noul (0-1); "All three question types can be mixed in a single
+API call." Score (docs.typesafe.ai/primitives/score): criteria are "an ordered
+array of level descriptions", at least two, the API accepts up to 10; the
+score is a position from 0 to the top level and "can fall between two
+levels". The bug-severity example and its 1.43 are the docs' own response
+(probabilities 0.0 / 0.57 / 0.43). The noul and choice examples (urgent,
+team) are illustrations, not real calls. Curation questions: infra/workflows/memory-curation.yaml (all noul).
+Diagram: diagrams/jev-shapes.mjs, rendered with diagrams/render/render-scene.mjs.
 -->
 
 ---
@@ -903,6 +934,13 @@ runtime: hcl
 </div>
 </div>
 
+<div class="qr-corner qr-corner--low">
+  <div class="qr-corner__code">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fwww.pulumi.com%2F" alt="QR code: pulumi.com" />
+  </div>
+  <span>pulumi.com</span>
+</div>
+
 <!--
 ~50s. runtime: hcl in Pulumi.yaml. elastic/ec and elastic/elasticstack are
 Terraform providers, pulled from the OpenTofu registry and bridged on the
@@ -917,7 +955,7 @@ Sources: pulumi.com/docs/iac/languages-sdks/hcl; infra/main.tf (regions
 
 # Eight indices, two scoped keys.
 
-<div class="big-code !mt-4">
+<div class="big-code big-code--qr !mt-4">
 
 ```hcl
 resource "elasticstack_elasticsearch_index" "memory" {
@@ -941,6 +979,13 @@ resource "elasticstack_elasticsearch_security_api_key" "mcp" {      # any MCP cl
 
 </div>
 
+<div class="qr-corner qr-corner--low">
+  <div class="qr-corner__code">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fwww.pulumi.com%2F" alt="QR code: pulumi.com" />
+  </div>
+  <span>pulumi.com</span>
+</div>
+
 <!--
 ~40s. Seven indices for the bridge, the eighth is the curation log. semantic_text fields point at Jina v5 on the Elastic Inference
 Service, so there's no model to deploy. Two keys: the bridge writes, the MCP
@@ -953,7 +998,7 @@ privileges, Kibana application privileges and metadata omitted).
 
 # One more provider, for what elasticstack can't create.
 
-<div class="big-code !mt-4">
+<div class="big-code big-code--qr !mt-4">
 
 ```hcl
 # Workflows only call out through Kibana's .http connector
@@ -973,6 +1018,13 @@ resource "elasticstack_kibana_agentbuilder_workflow" "curation" {
 }
 ```
 
+</div>
+
+<div class="qr-corner qr-corner--low">
+  <div class="qr-corner__code">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fwww.pulumi.com%2F" alt="QR code: pulumi.com" />
+  </div>
+  <span>pulumi.com</span>
 </div>
 
 <!--

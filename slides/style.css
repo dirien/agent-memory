@@ -373,3 +373,14 @@ html {
 
 /* Second-brain timeline: an image on top of each card */
 .timeline .tl-img { width: 100%; height: 10rem; object-fit: contain; border-radius: 0.4rem; margin-bottom: 0.8rem; }
+
+/* Same-size SVG layers stacked on top of each other; later layers are
+ * revealed with v-click (System 1 vs 2, Jev's three answer shapes) */
+.layer-stack { position: relative; width: 100%; max-width: 72rem; margin: 0 auto; }
+.layer-stack--wide { max-width: 78rem; margin-top: 1.5rem; }
+.layer-stack img { display: block; width: 100%; height: auto; }
+.layer-stack img + img { position: absolute; inset: 0; }
+
+/* Code panel that leaves the bottom-right corner free for a .qr-corner */
+.big-code--qr { margin-right: 11.5rem; }
+.qr-corner--low { bottom: 20px; }

@@ -37,12 +37,13 @@ start, delete `node_modules` and run the install again.
 slides.md          -> the deck (one file)
 style.css          -> overlay on @pulumi/slidev-theme: +40% font size, h1 pinned top, .big-code/.code-lg/.code-xl, .mem-card/.mem-caption, .meme-slide/.meme-frame, .soul-slide; story slides: .term-grid, .stat, .takeaway, .quote-card, .timeline, .cmp, .why-grid(--two), .hcl-grid, .memento, .diagram-frame(--strip), .stat-row, .step-row, .qr-corner
 diagrams/*.mmd     -> Mermaid sources of the Excalidraw diagrams in public/diagrams/*.svg
-diagrams/render/   -> mermaid-to-excalidraw renderer (headless Chromium); see its README to regenerate
+diagrams/*.mjs     -> hand-placed Excalidraw scenes Mermaid can't lay out (System 1 vs 2, Jev's three answer shapes)
+diagrams/render/   -> mermaid-to-excalidraw renderer plus render-scene.mjs for the .mjs scenes (headless Chromium); see its README
 snippets/soul.md   -> the SOUL.md intro slide content (reused from the GPU talk)
 snippets/infra     -> symlink to ../../infra; Slidev refuses snippet paths outside slides/, so import infra code as <<< @/snippets/infra/<file>.tf hcl
 public/fonts/      -> Inter + Monaspace Neon
 public/logos/      -> Pulumi logos (dark/light), TypeSafe AI wordmark (slide 24), GitHub mark (Resources)
-public/diagrams/   -> Excalidraw SVGs (architecture, recall, curation), generated from diagrams/*.mmd
+public/diagrams/   -> Excalidraw SVGs: architecture, recall, curation (from .mmd); system1/2, shapes1-3 (layers revealed per click, from .mjs)
 public/memento-leonard.jpg -> film still for the Memento slides; local only, gitignored (public repo)
 ```
 Theme: `@pulumi/slidev-theme` 0.4.0 (layouts: cover, default, section, two-cols, image-left, image-right, code, diagram, diagram-left, diagram-right, quote, statement, end). Mermaid is pinned to v11 because the theme's Mermaid styling targets v11.
@@ -57,7 +58,7 @@ Reference: `dirien/stop-wasting-gpus-how-we-built-a-golden-path-for-gpu-sharing-
 - Close: `Q&A`, `Thanks.`, `Resources` (contact cards + QR codes).
 
 ## Draft status
-Story arc (2026-10-05): opening Friday/Monday → amnesia → three fixes everyone tries → second brains and Karpathy's LLM wiki → "Memory is a search problem" → where each memory lives, agent-memory, ES|QL recall, why Elasticsearch, when you don't need it → **keeping memory true** (a wrong memory reaches every agent; System 2 writes, System 1 decides; curation diagram; Jev votes, Painless decides; why Jev; typed isn't true) → Pulumi (incl. the restapi connector slide) → demo (DEMO.md: a bug you only debug once; the sandboxes and placeholder keys are explained in its intro) → close. Don't cite third-party YouTube creators on slides. ~30 min of noted timing.
+Story arc (2026-10-05): opening Friday/Monday → amnesia → three fixes everyone tries → second brains and Karpathy's LLM wiki → "Memory is a search problem" → where each memory lives, agent-memory, ES|QL recall, why Elasticsearch, when you don't need it → **keeping memory true** (a wrong memory reaches every agent; somebody has to decide; Enter Jev!; a real Jev call; Jev is not an LLM (System 1 vs 2); curation diagram; Jev's three answer shapes; Jev votes, a rule decides; it can be wrong, so it only votes) → Pulumi (incl. the restapi connector slide) → demo (DEMO.md: a bug you only debug once; the sandboxes and placeholder keys are explained in its intro) → close. Don't cite third-party YouTube creators on slides. ~30 min of noted timing.
 Open items:
 - Slide 3 (Friday/Monday) and the Memento captions still tell the WiFi story; the demo is now the recall-ranking bug. Align them or keep the WiFi hook.
 - Slide 3 replies are reconstructed; replace with real screenshots.
