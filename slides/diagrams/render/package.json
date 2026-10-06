@@ -1,0 +1,18 @@
+{
+  "name": "deck-diagrams",
+  "private": true,
+  "type": "module",
+  "description": "Mermaid -> Excalidraw -> SVG for the deck (see README.md)",
+  "scripts": {
+    "bundle": "esbuild entry.js --bundle --format=iife --outfile=bundle.js --define:process.env.NODE_ENV='\"production\"' --log-level=warning",
+    "serve": "python3 -m http.server 8765 --bind 127.0.0.1"
+  },
+  "devDependencies": {
+    "@excalidraw/excalidraw": "0.18.1",
+    "@excalidraw/mermaid-to-excalidraw": "2.2.2",
+    "esbuild": "0.28.2",
+    "playwright": "^1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  }
+}

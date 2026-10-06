@@ -1,0 +1,9 @@
+flowchart LR
+  N["New memory<br/>(not curated yet)"] --> S["Semantic search<br/>3 nearest older memories"]
+  S --> J["Jev<br/>10 yes/no questions<br/>per pair"]
+  J --> P("Painless rule")
+  P --> SUP["Older memory<br/>superseded"]
+  P --> REV["Flagged for review<br/>(plan or partial change)"]
+  P --> DUP["Linked as duplicate"]
+  P --> KEEP["No change"]
+  P -.-> LOG["agent-curation<br/>votes + outcome"]

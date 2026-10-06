@@ -1,0 +1,8 @@
+%%{init: {"flowchart": {"rankSpacing": 120, "nodeSpacing": 70, "padding": 18}}}%%
+flowchart LR
+  A["Claude Code"] -- "SessionStart · PostToolUse<br/>SessionEnd hooks" --> B["bridge CLI"]
+  B -- "remember · recall<br/>log · task" --> C["Elasticsearch<br/>Serverless"]
+  B -. "offline" .-> D["fallback/ outbox"]
+  D -. "bridge sync" .-> C
+  C --> E["Kibana<br/>dashboard<br/>Agent Builder MCP"]
+  F["Any MCP client"] -- "read-only key" --> E

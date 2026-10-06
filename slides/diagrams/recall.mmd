@@ -1,0 +1,5 @@
+%%{init: {"flowchart": {"rankSpacing": 150, "nodeSpacing": 50, "padding": 18}}}%%
+flowchart LR
+  A["Claude Code"] -- "bridge recall<br/>#quot;how was the wifi?#quot;" --> B["bridge CLI"]
+  B -- "one ES|QL query" --> C["Elasticsearch<br/>Serverless"]
+  C -. "top 5 memories,<br/>with content" .-> A
