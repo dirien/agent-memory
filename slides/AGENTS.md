@@ -57,7 +57,7 @@ Reference: `dirien/stop-wasting-gpus-how-we-built-a-golden-path-for-gpu-sharing-
 - Close: `Q&A`, `Thanks.`, `Resources` (contact cards + QR codes).
 
 ## Draft status
-Story arc (2026-10-05): opening Friday/Monday → amnesia → three fixes everyone tries → second brains and Karpathy's LLM wiki → "Memory is a search problem" → where each memory lives, agent-memory, ES|QL recall, why Elasticsearch, when you don't need it → **keeping memory true** (a wrong memory reaches every agent; System 2 writes, System 1 decides; curation diagram; Jev votes, Painless decides; why Jev; typed isn't true) → Pulumi (incl. the restapi connector slide) → demo (DEMO.md: a bug you only debug once; the sandboxes and placeholder keys are explained in its intro) → what broke → close. Don't cite third-party YouTube creators on slides. ~30 min of noted timing.
+Story arc (2026-10-05): opening Friday/Monday → amnesia → three fixes everyone tries → second brains and Karpathy's LLM wiki → "Memory is a search problem" → where each memory lives, agent-memory, ES|QL recall, why Elasticsearch, when you don't need it → **keeping memory true** (a wrong memory reaches every agent; System 2 writes, System 1 decides; curation diagram; Jev votes, Painless decides; why Jev; typed isn't true) → Pulumi (incl. the restapi connector slide) → demo (DEMO.md: a bug you only debug once; the sandboxes and placeholder keys are explained in its intro) → close. Don't cite third-party YouTube creators on slides. ~30 min of noted timing.
 Open items:
 - Slide 3 (Friday/Monday) and the Memento captions still tell the WiFi story; the demo is now the recall-ranking bug. Align them or keep the WiFi hook.
 - Slide 3 replies are reconstructed; replace with real screenshots.

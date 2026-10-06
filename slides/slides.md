@@ -117,14 +117,14 @@ class: 'meme-slide'
 <div class="meme-frame memento">
   <div class="memento__scene">
     <img src="/memento-leonard.jpg" alt="Leonard Shelby in Memento, holding up a Polaroid" />
-    <div v-click="1" class="memento__photo">&gt; claude</div>
-    <div v-click="1" class="memento__caption">WiFi is bad.<br/>Record every demo.</div>
+    <div class="memento__photo">&gt; claude</div>
+    <div class="memento__caption">WiFi is bad.<br/>Record every demo.</div>
   </div>
 </div>
 
 <!--
-~10s. Memento. Let them recognise Leonard first, then click: the Polaroid.
-Leonard can't form new memories, so he runs on Polaroids with notes on them. Say nothing and wait for the laugh, or: "Leonard, but
+~10s. Memento. Leonard can't form new memories, so he runs on Polaroids
+with notes on them. Say nothing and wait for the laugh, or: "Leonard, but
 for your agent." This is Friday's first note.
 Optional line: Karpathy, May 2025: "LLMs are quite literally like the guy in
 Memento, except we haven't given them their scratchpad yet."
@@ -274,26 +274,30 @@ ourselves."
 
 # People have always kept a second brain.
 
-<div class="timeline !mt-4">
+<div class="timeline !mt-0">
 <div v-click class="mem-card">
+<img class="tl-img" src="/second-brain/memex.jpg" alt="Bush's 1945 sketch of the Memex: a desk with screens, levers and microfilm" />
 <div class="year">1945</div>
 <p>Vannevar Bush's Memex: "an enlarged intimate supplement to his memory."</p>
 </div>
 <div v-click class="mem-card">
+<img class="tl-img" src="/second-brain/slip-box.png" alt="A Zettelkasten slip box linking fleeting, literature and permanent notes" />
 <div class="year">1952</div>
 <p>Niklas Luhmann starts a slip box that grows to about 90,000 cards.</p>
 </div>
 <div v-click class="mem-card">
+<img class="tl-img" src="/second-brain/basb-para.png" alt="Building a Second Brain: Capture, Organize, Distill, Express, with the PARA folders" />
 <div class="year">2022</div>
 <p>Tiago Forte's <em>Building a Second Brain</em>.</p>
 </div>
 <div v-click class="mem-card mem-card--primary">
+<img class="tl-img" src="/second-brain/llm-wiki.jpg" alt="The LLM Wiki: collect, compile, wiki" />
 <div class="year">2026</div>
 <p>Karpathy's LLM Wiki: the model keeps the notes.</p>
 </div>
 </div>
 
-<div v-click class="quote-card !mt-10">
+<div v-click class="quote-card !mt-6">
 <p>"Humans abandon wikis because the maintenance burden grows faster than the value."</p>
 <p class="quote-by">Andrej Karpathy, LLM Wiki gist, April 2026</p>
 </div>
@@ -310,6 +314,11 @@ Fact-check:
 - Forte: first published June 14, 2022 (Atria).
 - Karpathy gist created 2026-04-04:
   https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f
+Images (public/second-brain/, local only, not committed): Memex sketch via
+erinkmalone.medium.com "Foreseeing the Future: The legacy of Vannevar Bush";
+slip box from hybridhacker.email "How I take notes: mastering the basics";
+LLM Wiki graphic from aimaker.substack.com "LLM Wiki + Obsidian"; CODE + PARA
+diagram from workflowy.com/help/build-a-second-brain (basb-3.png).
 -->
 
 ---
@@ -389,7 +398,7 @@ Fact-check: gist; my July post (above).
 
 <table class="cmp !mt-2">
 <thead>
-<tr><th></th><th v-click="1">CLAUDE.md</th><th v-click="2">Auto memory</th><th v-click="3">LLM wiki</th><th v-click="4" class="cmp-es">Elasticsearch</th></tr>
+<tr><th></th><th v-click="1">AGENTS.md</th><th v-click="2">Auto memory</th><th v-click="3">LLM wiki</th><th v-click="4" class="cmp-es">Elasticsearch</th></tr>
 </thead>
 <tbody>
 <tr><td>Who writes it</td><td v-click="1">you</td><td v-click="2">the agent</td><td v-click="3">the agent</td><td v-click="4" class="cmp-es">the agent, via hooks and CLI</td></tr>
@@ -404,13 +413,14 @@ Fact-check: gist; my July post (above).
 ~90s. The whole talk so far on one slide. Start with the rows, the
 questions every memory has to answer: who writes it, new laptop, teammate,
 how the agent finds it, what happens as it grows. Then one column per click:
-[click] CLAUDE.md: you write it, git carries it, it eats context.
+[click] AGENTS.md (Claude Code calls it CLAUDE.md): you write it, git
+carries it, it eats context.
 [click] Auto memory: the agent writes it, and it stays on this machine.
 [click] LLM wiki: travels in git, but needs real search once it grows.
 [click] Elasticsearch: what the rest of the talk shows.
 Each Markdown approach gives up at least one row.
 Fact-check:
-- CLAUDE.md: "Longer files consume more context and reduce adherence."
+- AGENTS.md / CLAUDE.md: "Longer files consume more context and reduce adherence."
   https://code.claude.com/docs/en/memory
 - Auto memory: 200 lines / 25 KB of MEMORY.md; machine-local (same page).
 - LLM wiki: Karpathy gist, "as the wiki grows you want proper search".
@@ -551,7 +561,7 @@ Fact-check: lib/memory.sh (limit 5, FORK/FUSE/DECAY); infra/memory.tf
 <div class="mem-card mem-card--muted">
 <div class="mem-caption">Stay with Markdown when</div>
 <p class="!mt-4">One developer, one machine, one repo.</p>
-<p>The memory fits in an index file. Karpathy puts that at hundreds of pages.</p>
+<p>An index file still finds everything. Karpathy says that holds up to about 100 sources and hundreds of pages.</p>
 </div>
 <div v-click class="mem-card mem-card--primary">
 <div class="mem-caption mem-caption--accent">Reach for Elasticsearch when</div>
@@ -597,6 +607,20 @@ conformant bundle is still a wrong runbook, now served to every agent on the
 team with confidence."
 Fact-check: lib/memory.sh (DECAY only in the hybrid ES|QL path); "Knowledge as
 Code" (2026-07-14).
+-->
+
+---
+class: 'meme-slide'
+---
+
+<div class="meme-frame-light">
+  <img src="/memes/computer-guy.png" alt="The skeptical computer guy meme: a stick figure frowning at his monitor, hand on chin" />
+</div>
+
+<!--
+~5s. No words. That's the face of an agent that gets both memories back.
+Image: "HD Computer Guy Meme" by alpha-mon on DeviantArt
+(public/memes/computer-guy.png, local only, not committed).
 -->
 
 ---
@@ -713,15 +737,16 @@ the answers come back together, as probabilities, in well under a second. The
 question types are a yes/no (they call it a Noul, short for Bernoulli), a
 choice from a list, and a score. Read the left card, ask the room what they'd
 guess, [click] Jev's answer. The 94% is a real answer for the demo's pair,
-asked today; the same request also said 91% that both memories are about the
-same thing. I wrote about using it to route Claude Code messages between
+asked on October 5; the same request said 91% that both memories are about the
+same thing. Asked again on October 6: 95% and 87%. Answers move a little
+between runs, which is why the rule uses thresholds. I wrote about using it to route Claude Code messages between
 models; same idea: a decision, not a conversation.
 Fact-check: typesafe.ai/blog/introducing-system-one-models-and-jev
 (2026-09-15); docs.typesafe.ai/introduction (question types);
 news.ycombinator.com/item?id=49717558 (launch thread); Vercel AI Gateway
 (2026-09-16); Cloudflare model catalog entry (2026-09-17); CEO on HN for
 "Bernoulli"; Jev call for this pair on 2026-10-05 (jev-1.13.0): outdated 0.94,
-same subject 0.91; pulumi.com/blog/route-every-claude-code-message-to-the-right-model-with-jev.
+same subject 0.91; re-run 2026-10-06 with the workflow's questions: 0.95, 0.87; pulumi.com/blog/route-every-claude-code-message-to-the-right-model-with-jev.
 -->
 
 ---
@@ -963,7 +988,6 @@ Fact-check: trimmed from infra/curation.tf; infra/sdks/restapi/hcl.sdk.json.
 
 <div class="absolute inset-0 flex flex-col justify-center items-center px-20 text-center">
   <h1 class="!text-[10rem] !leading-tight !font-semibold !tracking-tight !m-0 text-[var(--p-primary)] !max-w-[95%]">Demo.</h1>
-  <p class="!mt-6 !text-[2.4rem] text-[var(--p-fg-muted)] !m-0">A bug you only debug once.</p>
 </div>
 
 <!--
@@ -984,30 +1008,6 @@ sandbox only gets placeholders. If Claude calls one a leaked key: it isn't.
 4. Same sandbox: the MCP prompt (status, superseded_by, curation outcome),
    then the Kibana dashboard.
 Exit with /exit, not Ctrl-\, or SessionEnd doesn't run.
--->
-
----
-
-# The memory had amnesia.
-
-<div class="big-code !mt-6">
-
-```bash
-content="$(echo "$content" | sed '1,/^---$/d' | sed '1,/^---$/d')"
-#                                                ^ deletes the body too
-```
-
-</div>
-
-<p v-click class="!mt-8 !text-[1.6rem] !leading-relaxed text-center">
-Every synced memory reached Elasticsearch with an empty body. Fixed in the fork.
-</p>
-
-<!--
-~45s. Found while porting to Linux for the sandbox. The second sed pass ate
-everything after the frontmatter. Also: every memory was typed
-"observation", because Claude Code nests `type:` under `metadata:`.
-Fact-check: commit a802511.
 -->
 
 ---

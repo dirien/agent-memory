@@ -5,3 +5,9 @@ dist
 
 # Film still for the Memento slides: local only, not ours to publish
 public/memento-leonard.jpg
+
+# Third-party images on the second-brain slide: local only, credited in the notes
+public/second-brain/
+
+# Third-party meme images: local only, credited in the notes
+public/memes/

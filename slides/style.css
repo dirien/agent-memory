@@ -370,3 +370,6 @@ html {
 .step-row > div { border-top: 3px solid var(--p-primary); padding-top: 0.6rem; }
 .step-row code { font-family: var(--slidev-font-mono); color: var(--p-primary); font-size: 1.1rem; font-weight: 700; background: none; padding: 0; }
 .step-row p { font-size: 1.2rem !important; line-height: 1.35 !important; margin: 0.4rem 0 0 !important; color: var(--p-fg); }
+
+/* Second-brain timeline: an image on top of each card */
+.timeline .tl-img { width: 100%; height: 10rem; object-fit: contain; border-radius: 0.4rem; margin-bottom: 0.8rem; }
