@@ -71,4 +71,23 @@ window.renderMermaid = async (definition, { highlight = [], fontSize = 20 } = {}
   });
   return svg.outerHTML;
 };
+// A hand-placed scene (Excalidraw element skeletons) for layouts Mermaid can't
+// express. Text with `cx` is centred on that x after Excalidraw measures it.
+window.renderScene = async (skeleton) => {
+  await document.fonts.load("20px Excalifont");
+  const centre = new Map(skeleton.filter((e) => e.type === "text" && e.cx !== undefined).map((e) => [e.id, e.cx]));
+  const els = convertToExcalidrawElements(skeleton.map(({ cx, ...e }) => e), { regenerateIds: false });
+  for (const el of els) {
+    if (el.roughness === undefined) el.roughness = 1;
+    if (el.type === "text") el.fontFamily = FONT_FAMILY.Excalifont;
+    if (centre.has(el.id)) el.x = centre.get(el.id) - el.width / 2;
+  }
+  const svg = await exportToSvg({
+    elements: els,
+    files: null,
+    appState: { exportBackground: false, viewBackgroundColor: "transparent", exportWithDarkMode: false, exportPadding: 0 },
+    exportPadding: 0,
+  });
+  return svg.outerHTML;
+};
 window.ready = true;
