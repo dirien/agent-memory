@@ -122,12 +122,11 @@ DEMO.md                 -> the demo runbook: three sandboxes (fri, mon, wed), fo
 
 ## Codebase State
 - Kit: `:latest` is published from `main` with `KIT_REF` pinned to that commit; the demo uses it (`scripts/demo-sandbox.sh`). The last tag, `v0.2.2`, predates memory curation. Tags `v0.2.0`-`v0.2.2`; only `v0.2.0` has a GitHub release page.
-- The Serverless project `agent-memory` (aws-us-east-1) is live and billed, with curation on (20 resources); indices were wiped after the last test run.
-- A second project, `agent-memory-curation-test`, is still live and billed: stack in the `.worktrees/memory-curation` worktree, ESC `dirien/agent-memory/runtime-test`. Destroy it once the talk is done.
-- ESC: `dirien/agent-memory/elastic-cloud` (hand-made: `EC_API_KEY`, state passphrase, legacy `mcp.*` copies) and `dirien/agent-memory/runtime` (Pulumi-managed).
+- The demo backend was torn down after the talk (2026-10-06, `scripts/pulumi.sh destroy`, 20 resources: Serverless project `agent-memory`, curation on). The empty stack `local` stays in `infra/.pulumi-state`; `scripts/pulumi.sh up` rebuilds everything. The curation test project was destroyed the same day.
+- ESC: `dirien/agent-memory/elastic-cloud` (hand-made: `EC_API_KEY`, state passphrase, legacy `mcp.*` copies) (kept, `up` needs it) and `dirien/agent-memory/runtime` (Pulumi-managed: deleted with the stack, recreated by `up`).
 - This build sandbox has no Elastic hooks by design; demo sandboxes get them from the kit.
 - Known upstream lint warning: `lib/tasks.sh` `task_suspend_active` assigns an unused `suspended` variable.
-- `slides/slides.md` is the talk deck (38 slides, ~30 min of noted timing); see `slides/AGENTS.md`.
+- `slides/slides.md` is the talk deck (39 slides, ~30 min of noted timing); see `slides/AGENTS.md`.
 
 ## Terminology
 | Term | Means |
