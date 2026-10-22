@@ -15,9 +15,9 @@ on:
   workflow_dispatch:
     inputs:
       sbx_release:
-        description: "docker/sbx-releases tag to install (must support kit-spec v2)"
+        description: "docker/sbx-releases tag to install (must support kit-spec v2; 'latest' for the newest)"
         required: false
-        default: "latest"
+        default: "v0.46.0"
       tag:
         description: "OCI tag to publish"
         required: false
@@ -33,10 +33,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # sbx is pinned, not "latest": since v0.47.0, `sbx kit validate` needs a running
+      # daemon and an `sbx login`, neither of which this job has, so push-kit.sh fails
+      # with "not signed in to Docker" (docker/sbx-releases#685). v0.46.0 is the last
+      # release that validates offline. v0.49.1 adds `sbx kit validate --offline`;
+      # moving to it also needs a check that `sbx kit push` works without a login.
       - name: Install sbx
         env:
           GH_TOKEN: ${{ github.token }}
-          SBX_RELEASE: ${{ inputs.sbx_release || 'latest' }}
+          SBX_RELEASE: ${{ inputs.sbx_release || 'v0.46.0' }}
         run: |
           set -euo pipefail
           asset='DockerSandboxes-linux-amd64-ubuntu2604.deb'
