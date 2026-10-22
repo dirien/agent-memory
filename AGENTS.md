@@ -91,7 +91,7 @@ DEMO.md                 -> the demo runbook: three sandboxes (fri, mon, wed), fo
 - `.github/workflows/publish-kit.yaml`: installs `sbx`, runs `sbx kit validate` + `sbx kit push` for `ghcr.io/dirien/agent-memory-kit` on kit changes on `main` (`:latest`) and on `v*` tags. Permissions: `contents: read`, `packages: write`.
 
 ## Key Decisions
-- `elastic/elasticstack` 0.16.5 runs on the `terraform-provider` **1.3.0** bridge plugin, pinned in `infra/sdks/elasticstack/hcl.sdk.json`: 1.4.0 rejects the required `_id` attribute of `elasticsearch_query_ruleset` (0.16.1+), see pulumi/pulumi-terraform-provider#117. Don't run `pulumi install` in `infra/` until that's fixed; it re-resolves to 1.4.0 and fails.
+- `elastic/elasticstack` 0.16.6 runs on the `terraform-provider` **1.3.0** bridge plugin, pinned in `infra/sdks/elasticstack/hcl.sdk.json`: 1.4.0 rejects the required `_id` attribute of `elasticsearch_query_ruleset` (0.16.1+), see pulumi/pulumi-terraform-provider#117. Don't run `pulumi install` in `infra/` until that's fixed; it re-resolves to 1.4.0 and fails.
 - In Docker Sandboxes, Pulumi state is local (`infra/.pulumi-state`, stack `local`): the credential proxy overwrites `Authorization` on `api.pulumi.com`, so update-token calls fail with 401.
 - No `.env` files: the stack writes `<org>/agent-memory/runtime` (ESC) with every setting and both keys.
 - Keys reach sandboxes as `sbx secret set-custom` placeholders (`sbx-cs-...`), resolved on the host from ESC; the proxy replaces only the placeholder.
@@ -122,11 +122,13 @@ DEMO.md                 -> the demo runbook: three sandboxes (fri, mon, wed), fo
 
 ## Codebase State
 - Kit: `:latest` is published from `main` with `KIT_REF` pinned to that commit; the demo uses it (`scripts/demo-sandbox.sh`). The last tag, `v0.2.2`, predates memory curation. Tags `v0.2.0`-`v0.2.2`; only `v0.2.0` has a GitHub release page.
-- The demo backend was torn down after the talk (2026-10-06, `scripts/pulumi.sh destroy`, 20 resources: Serverless project `agent-memory`, curation on). The empty stack `local` stays in `infra/.pulumi-state`; `scripts/pulumi.sh up` rebuilds everything. The curation test project was destroyed the same day.
+- The demo backend is live again for the 2026-10-22 workshop: stack `local`, 20 resources, Serverless project `agent-memory-a62949` (aws-us-east-1), curation on with `jev-1.14.0`. Verified 2026-10-22: `bridge status` online, a test pair superseded by the workflow within a minute (outdated 0.97), recall hides it, MCP `tools/list` 22 tools; indices wiped afterwards. Tear it down after the workshop (`scripts/pulumi.sh destroy`, ask first).
 - ESC: `dirien/agent-memory/elastic-cloud` (hand-made: `EC_API_KEY`, state passphrase, legacy `mcp.*` copies) (kept, `up` needs it) and `dirien/agent-memory/runtime` (Pulumi-managed: deleted with the stack, recreated by `up`).
 - This build sandbox has no Elastic hooks by design; demo sandboxes get them from the kit.
 - Known upstream lint warning: `lib/tasks.sh` `task_suspend_active` assigns an unused `suspended` variable.
-- `slides/slides.md` is the talk deck (39 slides, ~30 min of noted timing); see `slides/AGENTS.md`.
+- Elastic Cloud org `pulumi-meetup-demo`: trial, no billing contact. It ended 2026-10-11 (project create then fails with 403 `organization_not_entitled`); the owner extended it to 2026-10-29 (check: `GET /api/v1/saas/user`, `.trials[].end`).
+- `bridge workflow ...` gets 403 with the default key: `BRIDGE_ES_API_KEY` has no Kibana privileges (`workflowsManagement:read`); set `BRIDGE_KIBANA_API_KEY` to use it. The curation workflow is managed by Pulumi, not by `bridge workflow`.
+- `slides/slides.md` is the deck (41 slides) for the 2026-10-22 online rerun with David Pilato (Elastic); see `slides/AGENTS.md`.
 
 ## Terminology
 | Term | Means |
