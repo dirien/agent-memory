@@ -992,7 +992,136 @@ Pivot to Pulumi.
 
 ---
 
-# Yes, that's HCL. Yes, that's Pulumi.
+<div class="sec">
+  <img class="sec__lines sec__lines--tr" src="/lines/bg-top-right-1.svg" alt="" />
+  <img class="sec__lines sec__lines--bl" src="/lines/bg-bottom-left-1.svg" alt="" />
+  <div class="sec__inner">
+    <img src="/logos/elastic-logo-white.svg" class="elastic-logo" alt="Elastic" />
+    <h1 class="!text-[6rem] !leading-tight !font-semibold !tracking-tight !m-0 !text-[var(--p-primary)] !max-w-[95%]">Elastic Serverless.</h1>
+  </div>
+</div>
+
+<style scoped>
+.sec { position: absolute; inset: 0; overflow: hidden; }
+.sec__lines { position: absolute; width: 30rem; height: auto; opacity: 0.55; pointer-events: none; }
+.sec__lines--tr { top: 0; right: 0; }
+.sec__lines--bl { bottom: 0; left: 0; }
+.sec__inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 5rem; }
+.sec__inner h1 { text-wrap: balance; }
+.elastic-logo { height: 6.5rem; width: auto; margin-bottom: 3.5rem; }
+</style>
+
+<!--
+Handover: David takes over here for Elastic Serverless.
+TK: David's timing and his slides after this one.
+Same section slide as the Docker Sandboxes handover in the Neo in a Docker
+Sandbox workshop (pulumi/workshops, neo-in-a-docker-sandbox/slides/slides.md;
+public/lines/ copied from there).
+Logo: elastic-logo-white.svg from elastic.co/brand (images.contentstack.io
+asset), 2026-10-22.
+-->
+
+---
+
+<div class="sec">
+  <img class="sec__lines sec__lines--tr" src="/lines/bg-top-right-1.svg" alt="" />
+  <img class="sec__lines sec__lines--bl" src="/lines/bg-bottom-left-1.svg" alt="" />
+  <div class="sec__inner">
+    <img src="/logos/pulumi-logo-horizontal-color-dark.svg" class="pulumi-logo" alt="Pulumi" />
+  </div>
+</div>
+
+<style scoped>
+.sec { position: absolute; inset: 0; overflow: hidden; }
+.sec__lines { position: absolute; width: 30rem; height: auto; opacity: 0.55; pointer-events: none; }
+.sec__lines--tr { top: 0; right: 0; }
+.sec__lines--bl { bottom: 0; left: 0; }
+.sec__inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 5rem; }
+.pulumi-logo { height: 8.45rem; width: auto; }
+</style>
+
+<!--
+Handover back: Engin takes over from David for the Pulumi part.
+Same section slide as "Elastic Serverless." and the Neo deck's Docker
+Sandboxes handover, with the Pulumi logo alone (30% larger than the
+Elastic logo on slide 34).
+-->
+
+---
+
+<div class="absolute inset-0 flex items-center px-24 gap-20">
+  <div class="flex-shrink-0">
+    <img src="/img/pulumi-why.png" class="h-[38rem] w-auto" alt="Pulumi illustration: language icons, composable blocks, the operational layer and Neo" />
+  </div>
+  <div class="why-list flex-1">
+    <div v-click>
+      <p class="why-list__head">Real programming languages.</p>
+      <p>Loops, conditionals, functions, classes, modules, types, refactoring — all the benefits of modern languages and ecosystems.</p>
+    </div>
+    <div v-click>
+      <p class="why-list__head">Composable building blocks.</p>
+      <p>Components, packages, templates, and the Automation API for embedding Pulumi.</p>
+    </div>
+    <div v-click>
+      <p class="why-list__head">A complete operational layer.</p>
+      <p>Robust state, secrets, configuration, RBAC, policy, deployments, cross-cloud visibility and search.</p>
+    </div>
+    <div v-click>
+      <p class="why-list__head">Built for humans and agents.</p>
+      <p>Agents work best with code, and Neo, our infrastructure agent, brings full organizational context to every task.</p>
+    </div>
+  </div>
+</div>
+
+<style scoped>
+.why-list { display: flex; flex-direction: column; gap: 2rem; }
+.why-list p { margin: 0 !important; font-size: 1.55rem !important; line-height: 1.35 !important; color: var(--p-fg); }
+.why-list p.why-list__head { font-size: 1.9rem !important; font-weight: 600; color: var(--p-primary) !important; margin-bottom: 0.3rem !important; }
+</style>
+
+<!--
+~60s. What Pulumi is, four points, one click each.
+Copied from the Pulumi first-call pitch deck (Google Slides
+1zgoVOVuYR6P5Y7mBGd1MPWFaKpxWkngik4FmeIKTr8c, slide 9), text verbatim,
+illustration exported from that slide (public/img/pulumi-why.png),
+2026-10-22.
+-->
+
+---
+
+# Open source at the core, backed by a fully integrated platform.
+
+<div class="flex justify-center !mt-6">
+  <img src="/img/pulumi-platform.png" class="h-[34rem] w-auto" alt="Pulumi Cloud (console and REST API: identity and access control, secrets and configuration, agentic infrastructure, insights and governance, internal developer platform) on top of Pulumi open source (infrastructure as code, CLI and automation API, hundreds of cloud providers)" />
+</div>
+
+<!--
+~45s. Bottom: the open-source part, languages, `pulumi up`, providers.
+Top: Pulumi Cloud on top of it. Today's stack uses both: Pulumi IaC with
+the HCL runtime, and Pulumi ESC for the runtime environment.
+Copied from the Pulumi first-call pitch deck (Google Slides
+1zgoVOVuYR6P5Y7mBGd1MPWFaKpxWkngik4FmeIKTr8c, slide 10): title verbatim,
+diagram exported from that slide (public/img/pulumi-platform.png),
+2026-10-22.
+-->
+
+---
+
+<div class="absolute inset-0 flex flex-col justify-center items-center px-20 text-center">
+  <h1 class="!text-[7rem] !leading-tight !font-semibold !tracking-tight !m-0 !max-w-[95%]">
+    And we support <span class="text-[var(--p-primary)]">HCL.</span>
+  </h1>
+</div>
+
+<!--
+~10s. Bridge to the next slide: the languages on the platform slide, plus
+HCL. Everything in infra/ is HCL on Pulumi.
+Fact-check: infra/Pulumi.yaml (`runtime: hcl`).
+-->
+
+---
+
+# One pulumi up: the project, then everything inside it.
 
 <div class="hcl-grid !mt-2">
 <div>
@@ -1037,6 +1166,8 @@ Sources: pulumi.com/docs/iac/languages-sdks/hcl; infra/main.tf (regions
 <div class="big-code big-code--qr !mt-4">
 
 ```hcl
+locals { semantic = { type = "semantic_text", inference_id = var.embedding_inference_id } }
+
 resource "elasticstack_elasticsearch_index" "memory" {
   for_each = local.indices
   name     = each.key
@@ -1058,6 +1189,10 @@ resource "elasticstack_elasticsearch_security_api_key" "mcp" {      # any MCP cl
 
 </div>
 
+<style scoped>
+.big-code pre, .big-code .shiki, .big-code code { line-height: 1.45 !important; }
+</style>
+
 <div class="qr-corner qr-corner--low">
   <div class="qr-corner__code">
     <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fwww.pulumi.com%2F" alt="QR code: pulumi.com" />
@@ -1066,35 +1201,49 @@ resource "elasticstack_elasticsearch_security_api_key" "mcp" {      # any MCP cl
 </div>
 
 <!--
-~40s. Seven indices for the bridge, the eighth is the curation log. semantic_text fields point at Jina v5 on the Elastic Inference
-Service, so there's no model to deploy. Two keys: the bridge writes, the MCP
-server only reads. That's the "Scoped" card from before, in code.
-Fact-check: trimmed from infra/memory.tf and infra/mcp.tf (cluster
-privileges, Kibana application privileges and metadata omitted).
+~40s. Seven indices for the bridge, the eighth is the curation log. The
+`semantic` line is what every content_semantic field uses: semantic_text
+pointed at Jina v5 on the Elastic Inference Service, so there's no model to
+deploy and no embedding code in the bridge. Two keys: the bridge writes, the
+MCP server only reads. That's the "Scoped" card from before, in code.
+Fact-check: trimmed from infra/memory.tf and infra/mcp.tf (other field types
+in locals, cluster privileges, Kibana application privileges and metadata
+omitted); var.embedding_inference_id defaults to
+.jina-embeddings-v5-text-small (infra/variables.tf).
 -->
 
 ---
 
-# One more provider, for what elasticstack can't create.
+# Settings and keys go to Pulumi ESC, not a .env file.
 
 <div class="big-code big-code--qr !mt-4">
 
 ```hcl
-# Workflows only call out through Kibana's .http connector
-resource "restapi_object" "jev_connector" {
-  count = local.curation_enabled ? 1 : 0
-  path  = "/api/actions/connector"
-  data  = jsonencode(merge(local.jev_connector, { connector_type_id = ".http" }))
-
-  ignore_changes_to       = ["secrets"]   # Kibana never returns them
-  ignore_server_additions = true
+resource "pulumiservice_environment" "runtime" {
+  organization = var.esc_organization
+  project      = var.esc_project
+  name         = var.esc_environment
+  yaml = stringasset(yamlencode({ values = {
+    elastic = {
+      esUrl        = ec_elasticsearch_project.memory.endpoints.elasticsearch
+      bridgeApiKey = { "fn::secret" = elasticstack_elasticsearch_security_api_key.bridge.encoded }
+      mcpApiKey    = { "fn::secret" = elasticstack_elasticsearch_security_api_key.mcp.encoded }
+    }
+    environmentVariables = {
+      BRIDGE_ES_URL       = "$${elastic.esUrl}"
+      BRIDGE_ES_API_KEY   = "$${elastic.bridgeApiKey}"
+      ELASTIC_MCP_API_KEY = "$${elastic.mcpApiKey}"
+    }
+  } }))
 }
+```
 
-resource "elasticstack_kibana_agentbuilder_workflow" "curation" {
-  count              = local.curation_enabled ? 1 : 0
-  configuration_yaml = replace(file("workflows/memory-curation.yaml"),
-    "__JEV_CONNECTOR_ID__", restapi_object.jev_connector[0].id)
-}
+</div>
+
+<div v-click class="big-code big-code--qr !mt-4">
+
+```bash
+pulumi env run <org>/agent-memory/runtime -- claude
 ```
 
 </div>
@@ -1107,12 +1256,19 @@ resource "elasticstack_kibana_agentbuilder_workflow" "curation" {
 </div>
 
 <!--
-~40s. elastic/elasticstack creates workflows but not the .http connector they
-need (its connector map ends at .webhook), so that one object goes through
-Mastercard/restapi, pinned like the other providers. The Jev key comes from a
-Pulumi config secret and ends up in Kibana's encrypted secret headers; no
-agent ever sees it. Without a key, count = 0 and nothing is created.
-Fact-check: trimmed from infra/curation.tf; infra/sdks/restapi/hcl.sdk.json.
+~45s. The last thing the stack creates is a Pulumi ESC environment with
+everything an agent needs: the endpoints and both API keys, the keys as
+secrets. No .env file to copy around or leak. [click] Start Claude Code
+through it: the variables exist only in that process. In Docker Sandboxes the
+keys don't even get that far: the sandbox sees placeholders and the proxy on
+the host fills in the real value per request.
+If asked about the curation workflow: elasticstack can't create the Kibana
+.http connector Jev needs (still true in 0.16.6, its connector map ends at
+.webhook), so that one object goes through Mastercard/restapi; the Jev key
+sits in Kibana's encrypted secret headers (infra/curation.tf).
+Fact-check: trimmed from infra/esc.tf (local.runtime_environment inlined;
+kibanaUrl, kibanaHost, agentId and the entity index variables omitted);
+the command is the one in esc.tf's header comment.
 -->
 
 ---

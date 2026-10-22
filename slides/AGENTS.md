@@ -19,6 +19,7 @@ The talk, from https://luma.com/ai-agents-nyc:
 | Abstract gist | agents lose context between sessions; Claude Code's markdown memory is local; agent-memory stores decisions and session history in Elasticsearch, shared across machines, deployed with Pulumi |
 | Rerun (current) | Pulumi online workshop, Thursday 2026-10-22, 60 min, hands-on; co-speaker David Pilato (Principal Developer Advocate, Elastic; X/GitHub `dadoonet`). https://www.pulumi.com/events/give-your-coding-agent-an-elastic-memory/ |
 | Online format | Housekeeping slide (chat, Q&A, handouts, recording) copied from `pulumi/workshops` `neo-in-a-docker-sandbox/slides/slides.md` |
+| Handover | Slide 34 "Elastic Serverless." (section slide like the Neo deck's Docker Sandboxes handover): David takes over there. Slide 35 (Pulumi logo only) hands back to Engin; slides 36-37 are slides 9-10 of the Pulumi first-call pitch deck (Google Slides `1zgoVOVuYR6P5Y7mBGd1MPWFaKpxWkngik4FmeIKTr8c`), text verbatim, artwork in `public/img/pulumi-why.png` and `pulumi-platform.png` |
 
 ## Setup
 From `slides/`: `npm install --no-audit --no-fund --maxsockets=6 --fetch-retries=5`. Plain `npm install`
@@ -44,7 +45,8 @@ diagrams/render/   -> mermaid-to-excalidraw renderer plus render-scene.mjs for t
 snippets/soul.md   -> the SOUL.md intro (from the GPU talk); off the deck since 2026-10-21, replaced by the standard speaker card (slide 2). Kept with .soul-slide in case it comes back
 snippets/infra     -> symlink to ../../infra; Slidev refuses snippet paths outside slides/, so import infra code as <<< @/snippets/infra/<file>.tf hcl
 public/fonts/      -> Inter + Monaspace Neon
-public/logos/      -> Pulumi logos (dark/light), TypeSafe AI wordmark (slide 24), GitHub mark (Resources)
+public/logos/      -> Pulumi logos (dark/light), TypeSafe AI wordmark (slide 24), GitHub mark (Resources), elastic-logo-white.svg (from elastic.co/brand; David's section slide)
+public/lines/      -> corner accent lines for section slides (copied from the Neo in a Docker Sandbox deck)
 public/img/        -> speaker photos: engin-diri.png (512x512, from the Neo workshop deck), david-pilato.jpg (200x200, event page)
 public/diagrams/   -> Excalidraw SVGs: architecture, recall, curation (from .mmd); system1/2, shapes1-3 (layers revealed per click, from .mjs)
 public/memento-leonard.jpg -> film still for the Memento slides; local only, gitignored (public repo)
@@ -61,7 +63,7 @@ Reference: `dirien/stop-wasting-gpus-how-we-built-a-golden-path-for-gpu-sharing-
 - Close: `Q&A`, `Thanks.`, `Resources` (contact cards + QR codes).
 
 ## Draft status
-Story arc (2026-10-05): opening Friday/Monday → amnesia → three fixes everyone tries → second brains and Karpathy's LLM wiki → "Memory is a search problem" → where each memory lives, agent-memory, ES|QL recall, why Elasticsearch, when you don't need it → **keeping memory true** (a wrong memory reaches every agent; somebody has to decide; Enter Jev!; a real Jev call; Jev is not an LLM (System 1 vs 2); curation diagram; Jev's three answer shapes; Jev votes, a rule decides; it can be wrong, so it only votes) → Pulumi (incl. the restapi connector slide) → demo (DEMO.md: a bug you only debug once; the sandboxes and placeholder keys are explained in its intro) → close. Don't cite third-party YouTube creators on slides. ~30 min of noted timing.
+Story arc (2026-10-05): opening Friday/Monday → amnesia → three fixes everyone tries → second brains and Karpathy's LLM wiki → "Memory is a search problem" → where each memory lives, agent-memory, ES|QL recall, why Elasticsearch, when you don't need it → **keeping memory true** (a wrong memory reaches every agent; somebody has to decide; Enter Jev!; a real Jev call; Jev is not an LLM (System 1 vs 2); curation diagram; Jev's three answer shapes; Jev votes, a rule decides; it can be wrong, so it only votes) → Elastic Serverless (David) → Pulumi (pitch slides, HCL, indices + keys with the semantic_text line, ESC instead of .env; the restapi connector is a note on the ESC slide since 2026-10-22) → demo (DEMO.md: a bug you only debug once; the sandboxes and placeholder keys are explained in its intro) → close. Don't cite third-party YouTube creators on slides. ~30 min of noted timing.
 Open items:
 - Slide 3 (Friday/Monday) and the Memento captions still tell the WiFi story; the demo is now the recall-ranking bug. Align them or keep the WiFi hook.
 - Slide 3 replies are reconstructed; replace with real screenshots.
