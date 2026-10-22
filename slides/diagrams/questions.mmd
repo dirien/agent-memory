@@ -1,0 +1,17 @@
+%%{init: {"flowchart": {"wrappingWidth": 700}}}%%
+flowchart LR
+  q1["1 · Do both answer the same question?"]
+  q2["2 · Do they give different answers?"]
+  q3["3 · Is one of them outdated?"]
+  q4["4 · Does the new one report a change?"]
+  q5["5 · Does the old one report a change?"]
+  q6["6 · Is the new one only a plan or a question?"]
+  q7["7 · Is the old one only a plan or a question?"]
+  q8["8 · Does one change only part of the other?"]
+  q9["9 · Does the new one say everything the old one says?"]
+  q10["10 · Does the old one say everything the new one says?"]
+  q1 ~~~ q6
+  q2 ~~~ q7
+  q3 ~~~ q8
+  q4 ~~~ q9
+  q5 ~~~ q10

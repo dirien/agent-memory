@@ -784,9 +784,12 @@ news.ycombinator.com/item?id=49717558 (launch thread); Vercel AI Gateway
 (2026-09-16); Cloudflare model catalog entry (2026-09-17); CEO on HN for
 "Bernoulli"; Jev call for this pair on 2026-10-05 (jev-1.13.0): outdated 0.94,
 same subject 0.91; re-run 2026-10-06 with the workflow's questions: 0.95, 0.87; pulumi.com/blog/route-every-claude-code-message-to-the-right-model-with-jev.
-The workflow now pins jev-1.14.0 (released 2026-10-14, typesafe.ai/blog/jev-1-14).
-Re-check 2026-10-21, workflow questions, three runs each: outdated 0.95-0.96
-on jev-1.13.0, 0.96-0.97 on jev-1.14.0; superseded in every run on both.
+The workflow pins jev-1.13.0. jev-1.14.0 (2026-10-14, typesafe.ai/blog/jev-1-14)
+was pinned on 2026-10-21 and reverted on 2026-10-22: Jevmem 0.7.2 went back
+to 1.13 because 1.14 missed 1 of its benchmark's 5 contradictions. Re-check
+2026-10-21, workflow questions, three runs each: outdated 0.95-0.96 on
+jev-1.13.0, 0.96-0.97 on jev-1.14.0. Live check on the workshop backend,
+2026-10-22, jev-1.13.0: outdated 0.95, same question 0.87, superseded.
 -->
 
 ---
@@ -841,6 +844,28 @@ Jev never decides which memory is newer; the search only ever returns older
 ones. Recall then skips anything marked superseded.
 Fact-check: infra/workflows/memory-curation.yaml, infra/curation.tf.
 Diagram: diagrams/curation.mmd, drawn with mermaid-to-excalidraw.
+-->
+
+---
+
+# Ten yes/no questions for every pair.
+
+<div class="diagram-frame !mt-2">
+  <img src="/diagrams/questions.svg" alt="The ten yes/no questions Jev answers for each pair of a new and an older memory: 1 do both answer the same question, 2 do they give different answers, 3 is one of them outdated, 4 does the new one report a change, 5 does the old one report a change, 6 is the new one only a plan or a question, 7 is the old one only a plan or a question, 8 does one change only part of the other, 9 does the new one say everything the old one says, 10 does the old one say everything the new one says." />
+</div>
+
+<!--
+~45s. These are the ten questions, for every pair of a new memory and one of
+its older neighbours. All ten go to Jev in one call, and the answers come back
+together. Questions 1 to 5 ask whether the two clash. 6 to 8 are the guards:
+a plan ("should we move to eu-west-1?") or an exception ("except the MCP part")
+must not retire anything. 9 and 10 spot copies. How the rule reads them is two
+slides on. Question 7 is asked and logged, but the rule doesn't use it yet.
+Fact-check: infra/workflows/memory-curation.yaml, step ask_jev, in this order:
+same_question, different_answer, outdated, new_reports_change,
+candidate_reports_change, hyp_new, hyp_candidate, partial, new_covers,
+candidate_covers (wording shortened); step decide doesn't read hyp_candidate.
+Diagram: diagrams/questions.mmd, drawn with mermaid-to-excalidraw.
 -->
 
 ---

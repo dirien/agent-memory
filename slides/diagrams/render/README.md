@@ -12,6 +12,7 @@ npm install && npx playwright install chromium
 npm run bundle                      # entry.js -> bundle.js
 npm run serve &                     # page.html + Excalidraw's fonts on :8765
 node render.mjs --font 24 ../curation.mmd ../../public/diagrams/curation.svg "Jev"
+node render.mjs --font 24 --grid ../questions.mmd ../../public/diagrams/questions.svg
 node render.mjs --font 28 ../architecture.mmd ../../public/diagrams/architecture.svg "Elasticsearch"
 node render.mjs --font 28 ../recall.mmd ../../public/diagrams/recall.svg "Elasticsearch"
 node preview.mjs ../../public/diagrams/curation.svg /tmp/curation.png   # check it on the dark background
@@ -19,7 +20,8 @@ node render-scene.mjs ../system1-vs-2.mjs ../../public/diagrams      # hand-plac
 node render-scene.mjs ../jev-shapes.mjs ../../public/diagrams
 ```
 
-Trailing arguments to `render.mjs` are node labels to highlight. `page.html`
+Trailing arguments to `render.mjs` are node labels to highlight. `--grid` drops
+the links (use `~~~` only to place boxes) and evens out the box widths per column. `page.html`
 loads Excalifont so Mermaid sizes the boxes for it; `entry.js` turns `<br/>`
 into real line breaks (the converter keeps them literally) and applies the
 deck colours.

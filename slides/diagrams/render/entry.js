@@ -11,7 +11,7 @@ const C = {
   accentFill: "#3d3170", // highlighted node fill
 };
 
-window.renderMermaid = async (definition, { highlight = [], fontSize = 20 } = {}) => {
+window.renderMermaid = async (definition, { highlight = [], fontSize = 20, grid = false } = {}) => {
   await document.fonts.load(`${fontSize}px Excalifont`);
   const { elements, files } = await parseMermaidToExcalidraw(definition, {
     themeVariables: { fontSize: `${fontSize}px`, fontFamily: "Excalifont" },
@@ -63,8 +63,24 @@ window.renderMermaid = async (definition, { highlight = [], fontSize = 20 } = {}
       if (box.height < needH) { box.y -= (needH - box.height) / 2; box.height = needH; }
     }
   }
+  // Grid mode: the links (`~~~`) only place the boxes, so drop them, and give
+  // every box in a column (same centre x) the column's widest width.
+  let out = els;
+  if (grid) {
+    out = els.filter((e) => e.type !== "arrow" && e.type !== "line");
+    const boxes = out.filter((e) => e.type !== "text");
+    const cols = new Map();
+    for (const b of boxes) {
+      const cx = Math.round((b.x + b.width / 2) / 20);
+      cols.set(cx, Math.max(cols.get(cx) || 0, b.width));
+    }
+    for (const b of boxes) {
+      const w = cols.get(Math.round((b.x + b.width / 2) / 20));
+      b.x -= (w - b.width) / 2; b.width = w;
+    }
+  }
   const svg = await exportToSvg({
-    elements: els,
+    elements: out,
     files,
     appState: { exportBackground: false, viewBackgroundColor: "transparent", exportWithDarkMode: false, exportPadding: 16 },
     exportPadding: 16,
