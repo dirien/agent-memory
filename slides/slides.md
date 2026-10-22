@@ -3,9 +3,10 @@ theme: "@pulumi/slidev-theme"
 title: "Give Your Coding Agent an (Elastic) Memory"
 info: |
   Give Your Coding Agent an (Elastic) Memory.
-  Engin Diri — Pulumi.
+  Engin Diri (Pulumi) and David Pilato (Elastic).
 
-  Elastic NYC User Group × Pulumi, October 6 2026.
+  Pulumi online workshop, October 22 2026.
+  First given at the Elastic NYC User Group × Pulumi, October 6 2026.
 
   Repo: https://github.com/dirien/agent-memory
 transition: slide-left
@@ -29,28 +30,103 @@ defaults:
   </p>
   <p class="!mt-10 !text-[1.8rem] text-[var(--p-fg-muted)] !m-0 !leading-relaxed">
     Engin Diri · Principal Solutions Architect, Pulumi<br/>
-    Elastic NYC User Group × Pulumi · October 6, 2026
+    David Pilato · Principal Developer Advocate, Elastic<br/>
+    Pulumi Workshop · October 22, 2026
   </p>
 </div>
 
 <!--
 ~20s. Read the title. "(Elastic)" is the pun: stretchy memory, and the
-company whose office we're in.
+company David works for.
+Fact-check: names, titles and date from
+https://www.pulumi.com/events/give-your-coding-agent-an-elastic-memory/
+(2026-10-21).
 -->
 
 ---
-class: soul-slide
----
 
-# SOUL.md
-
-<div class="h-[16px]"></div>
-
-<<< @/snippets/soul.md md
+<div class="absolute inset-0 flex items-center px-24 gap-20">
+  <div class="flex-shrink-0">
+    <img src="/img/engin-diri.png" class="w-[24rem] rounded-2xl shadow-xl border-4" style="border-color: color-mix(in srgb, var(--p-primary) 45%, transparent)" alt="Engin Diri" />
+  </div>
+  <div class="flex-1">
+    <h1 class="!text-[7rem] !leading-[1.02] !font-semibold !tracking-tight !mb-4 !text-[var(--p-primary)]">Engin Diri</h1>
+    <p class="!text-[2.5rem] !leading-relaxed !m-0 opacity-90">
+      Principal Solutions Architect at <strong class="!text-[var(--p-primary)]">Pulumi</strong>
+    </p>
+    <div class="!mt-8 flex items-center gap-10 !text-[1.8rem] opacity-70">
+      <span class="flex items-center gap-3"><carbon-logo-x /> @_ediri</span>
+      <span class="flex items-center gap-3"><carbon-logo-linkedin /> engin-diri</span>
+      <span class="flex items-center gap-3"><carbon-logo-github /> dirien</span>
+    </div>
+    <p class="!mt-10 !text-[1.9rem] !leading-relaxed opacity-70 !m-0">
+      Building platform tooling and infrastructure-as-code.<br/>
+      Helping teams ship cloud infrastructure faster.<br/>
+      With and without agents.
+    </p>
+  </div>
+</div>
 
 <!--
-~20s. Same intro as the GPU talk: I introduce myself the way an agent does.
-Tonight's topic is what an agent remembers about itself, so it fits.
+~20s. Engin introduces himself.
+Source: the standard speaker slide and photo from the Neo in a Docker Sandbox
+workshop (pulumi/workshops, neo-in-a-docker-sandbox/slides/slides.md,
+public/img/engin-diri.png); same photo as the event page.
+-->
+
+---
+
+<div class="absolute inset-0 flex items-center px-24 gap-20">
+  <div class="flex-shrink-0">
+    <img src="/img/david-pilato.jpg" class="w-[24rem] rounded-2xl shadow-xl border-4" style="border-color: color-mix(in srgb, var(--p-primary) 45%, transparent)" alt="David Pilato" />
+  </div>
+  <div class="flex-1">
+    <h1 class="!text-[7rem] !leading-[1.02] !font-semibold !tracking-tight !mb-4 !text-[var(--p-primary)]">David Pilato</h1>
+    <p class="!text-[2.5rem] !leading-relaxed !m-0 opacity-90">
+      Principal Developer Advocate at <strong class="!text-[var(--p-primary)]">Elastic</strong>
+    </p>
+    <div class="!mt-8 flex items-center gap-10 !text-[1.8rem] opacity-70">
+      <span class="flex items-center gap-3"><carbon-logo-x /> @dadoonet</span>
+      <span class="flex items-center gap-3"><carbon-logo-github /> dadoonet</span>
+      <span class="flex items-center gap-3"><carbon-blog /> david.pilato.fr</span>
+    </div>
+  </div>
+</div>
+
+<!--
+~20s. David introduces himself.
+TK: ask David for a one-line intro to put under the handles (the Neo deck
+had one per speaker), and which part of the hour he takes.
+Fact-check: name, title, company and photo from
+https://www.pulumi.com/events/give-your-coding-agent-an-elastic-memory/
+(photo: pulumi.com/images/people/david-pilato.jpg, 200x200). Handles from his
+GitHub profile (api.github.com/users/dadoonet: twitter_username dadoonet,
+blog david.pilato.fr), 2026-10-21.
+-->
+
+---
+
+# Housekeeping.
+
+<div class="zoom-content">
+
+<ul class="!mt-8 !text-[1.6rem] !leading-relaxed space-y-5">
+  <li>Be chatty in the chat tab</li>
+  <li>Ask questions in the Q&amp;A tab</li>
+  <li>The handouts tab has slides and the repo</li>
+  <li>The recording link comes by email</li>
+</ul>
+
+</div>
+
+<style scoped>
+.zoom-content { zoom: 1.6; }
+</style>
+
+<!--
+~30s. Same housekeeping as the Neo in a Docker Sandbox workshop
+(pulumi/workshops, neo-in-a-docker-sandbox/slides/slides.md). Questions go in
+the Q&A tab; we take them at the end.
 -->
 
 ---
@@ -708,6 +784,9 @@ news.ycombinator.com/item?id=49717558 (launch thread); Vercel AI Gateway
 (2026-09-16); Cloudflare model catalog entry (2026-09-17); CEO on HN for
 "Bernoulli"; Jev call for this pair on 2026-10-05 (jev-1.13.0): outdated 0.94,
 same subject 0.91; re-run 2026-10-06 with the workflow's questions: 0.95, 0.87; pulumi.com/blog/route-every-claude-code-message-to-the-right-model-with-jev.
+The workflow now pins jev-1.14.0 (released 2026-10-14, typesafe.ai/blog/jev-1-14).
+Re-check 2026-10-21, workflow questions, three runs each: outdated 0.95-0.96
+on jev-1.13.0, 0.96-0.97 on jev-1.14.0; superseded in every run on both.
 -->
 
 ---
@@ -1096,12 +1175,23 @@ harness that has to outlive the session.
 <div class="contact-grid">
   <div class="contact-card">
     <div class="contact-card__avatar">
-      <img src="https://github.com/dirien.png" alt="Engin Diri" />
+      <img src="/img/engin-diri.png" alt="Engin Diri" />
     </div>
     <div class="contact-card__name">Engin Diri</div>
     <div class="contact-card__role">Pulumi</div>
     <div class="contact-card__qr">
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fwww.linkedin.com%2Fin%2Fengin-diri%2F" alt="QR code: linkedin.com/in/engin-diri" />
+    </div>
+  </div>
+
+  <div class="contact-card">
+    <div class="contact-card__avatar">
+      <img src="/img/david-pilato.jpg" alt="David Pilato" />
+    </div>
+    <div class="contact-card__name">David Pilato</div>
+    <div class="contact-card__role">Elastic</div>
+    <div class="contact-card__qr">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https%3A%2F%2Fgithub.com%2Fdadoonet" alt="QR code: github.com/dadoonet" />
     </div>
   </div>
 
@@ -1120,7 +1210,7 @@ harness that has to outlive the session.
 <style scoped>
 .contact-grid {
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: auto auto auto;
   justify-content: center;
   gap: 6rem;
   margin-top: 2.5rem;
@@ -1160,6 +1250,10 @@ harness that has to outlive the session.
 <!--
 Closing slide. QR codes checked on 2026-10-06 by decoding them: LinkedIn
 https://www.linkedin.com/in/engin-diri/ and https://github.com/dirien/agent-memory.
+David's QR points at https://github.com/dadoonet (his LinkedIn isn't verified;
+swap it in if he prefers). Photos are local: engin-diri.png from the Neo
+workshop deck, david-pilato.jpg from the event page
+(pulumi.com/images/people/david-pilato.jpg).
 GitHub mark: public/logos/github-mark-white.svg (simple-icons path, white fill).
 The QR codes come from api.qrserver.com at render time; if
 the venue WiFi is bad, pre-render PNGs into public/ (that's the open task

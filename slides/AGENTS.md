@@ -17,6 +17,8 @@ The talk, from https://luma.com/ai-agents-nyc:
 | When / where | Tuesday 2026-10-06, 6:00-8:00 PM, Elastic NYC office, 1250 Broadway, floor 16 |
 | Slot | first talk, 6:30 PM; the second talk (Ines Potier, Elastic, stateless vs stateful Serverless) starts 7:10 PM, so ~40 min including Q&A |
 | Abstract gist | agents lose context between sessions; Claude Code's markdown memory is local; agent-memory stores decisions and session history in Elasticsearch, shared across machines, deployed with Pulumi |
+| Rerun (current) | Pulumi online workshop, Thursday 2026-10-22, 60 min, hands-on; co-speaker David Pilato (Principal Developer Advocate, Elastic; X/GitHub `dadoonet`). https://www.pulumi.com/events/give-your-coding-agent-an-elastic-memory/ |
+| Online format | Housekeeping slide (chat, Q&A, handouts, recording) copied from `pulumi/workshops` `neo-in-a-docker-sandbox/slides/slides.md` |
 
 ## Setup
 From `slides/`: `npm install --no-audit --no-fund --maxsockets=6 --fetch-retries=5`. Plain `npm install`
@@ -39,10 +41,11 @@ style.css          -> overlay on @pulumi/slidev-theme: +40% font size, h1 pinned
 diagrams/*.mmd     -> Mermaid sources of the Excalidraw diagrams in public/diagrams/*.svg
 diagrams/*.mjs     -> hand-placed Excalidraw scenes Mermaid can't lay out (System 1 vs 2, Jev's three answer shapes)
 diagrams/render/   -> mermaid-to-excalidraw renderer plus render-scene.mjs for the .mjs scenes (headless Chromium); see its README
-snippets/soul.md   -> the SOUL.md intro slide content (reused from the GPU talk)
+snippets/soul.md   -> the SOUL.md intro (from the GPU talk); off the deck since 2026-10-21, replaced by the standard speaker card (slide 2). Kept with .soul-slide in case it comes back
 snippets/infra     -> symlink to ../../infra; Slidev refuses snippet paths outside slides/, so import infra code as <<< @/snippets/infra/<file>.tf hcl
 public/fonts/      -> Inter + Monaspace Neon
 public/logos/      -> Pulumi logos (dark/light), TypeSafe AI wordmark (slide 24), GitHub mark (Resources)
+public/img/        -> speaker photos: engin-diri.png (512x512, from the Neo workshop deck), david-pilato.jpg (200x200, event page)
 public/diagrams/   -> Excalidraw SVGs: architecture, recall, curation (from .mmd); system1/2, shapes1-3 (layers revealed per click, from .mjs)
 public/memento-leonard.jpg -> film still for the Memento slides; local only, gitignored (public repo)
 ```
@@ -73,7 +76,7 @@ Open items:
 | Memory lost its body | upstream memory-sync ran `sed '1,/^---$/d'` twice: every synced memory had empty content; `type` nested under `metadata:` was never read | commit `a802511` |
 | Recall was broken | ES\|QL `DECAY` rejects `"45d"`; needs a time duration (`1080 hours`), so default hybrid recall failed on every query | `acb536f` |
 | Dashboard rejected | Kibana's dashboards API has no `treemap` panel type; became a `pie` with explicit defaults to stop drift | `17acb64` |
-| Pulumi HCL + any TF provider, almost | `elastic/elasticstack` 0.16.1+ has a required `_id` attribute; `terraform-provider` 1.4.0 turned that into a hard error (pulumi-terraform-bridge#3597), 1.3.0 still loads it; running 0.16.5 on 1.3.0 | issue pulumi/pulumi-terraform-provider#117 |
+| Pulumi HCL + any TF provider, almost | `elastic/elasticstack` 0.16.1+ has a required `_id` attribute; `terraform-provider` 1.4.0 turned that into a hard error (pulumi-terraform-bridge#3597), 1.3.0 still loads it; running 0.16.6 on 1.3.0 | issue pulumi/pulumi-terraform-provider#117 |
 | HCL shape | list-of-object properties are blocks (`dynamic "panels"`), single objects are arguments | `b148192` |
 | Config as ESC, not `.env` | `pulumiservice_environment` writes `agent-memory/runtime` from stack outputs; `pulumi env run ... -- claude` | `adb86b9`, `../infra/esc.tf` |
 | Sandbox proxy vs Pulumi | proxy overwrites `Authorization` on `api.pulumi.com`, update-token calls get 401, so state is local in sandboxes | `fc357ce`, `../kit/README.md` |
