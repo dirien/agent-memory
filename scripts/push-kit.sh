@@ -7,7 +7,7 @@
 #
 # Requires `sbx` and Docker logged in to the registry (.github/workflows/publish-kit.yaml
 # does both). Consumers use the bare OCI reference:
-#   sbx run --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 --kit ghcr.io/dirien/agent-memory-kit:latest claude .
+#   sbx run --kit ghcr.io/dirien/infrastructure-kit:v0.10.8 --kit ghcr.io/dirien/agent-memory-kit:latest claude .
 #
 # Reproducibility: the staged spec.yaml's KIT_REF is rewritten to the exact commit
 # being published, so the artifact always installs agent-memory from an

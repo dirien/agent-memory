@@ -57,7 +57,7 @@ earlier run; keep it, or repoint it as described in
 settings from `$E` and the kits (`KIT` defaults to
 `ghcr.io/dirien/agent-memory-kit:latest`, whose `KIT_REF` is pinned to the
 commit it was published from). Sandboxes start from the prebuilt
-`ghcr.io/dirien/infrastructure-sandbox:v0.10.5` template, so the
+`ghcr.io/dirien/infrastructure-sandbox:v0.10.8` template, so the
 infrastructure kit has nothing to install; only the first create pulls the
 image (`TEMPLATE=` falls back to the stock image, where that kit takes
 minutes). It's plain bash, so zsh can't trip over it.

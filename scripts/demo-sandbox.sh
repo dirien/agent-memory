@@ -15,7 +15,7 @@ name="${1:?usage: scripts/demo-sandbox.sh <sandbox-name> <workspace>}"
 ws="${2:?usage: scripts/demo-sandbox.sh <sandbox-name> <workspace>}"
 E="${E:-dirien/agent-memory/runtime}"
 KIT="${KIT:-ghcr.io/dirien/agent-memory-kit:latest}"
-TEMPLATE="${TEMPLATE-ghcr.io/dirien/infrastructure-sandbox:v0.10.5}"
+TEMPLATE="${TEMPLATE-ghcr.io/dirien/infrastructure-sandbox:v0.10.8}"
 val() { pulumi env get "$E" "elastic.$1" --value string; }
 
 [[ -d "$ws/.git" ]] || { echo "not a git clone: $ws" >&2; exit 1; }
@@ -25,7 +25,7 @@ sbx create --name "$name" --skills=off ${TEMPLATE:+--template "$TEMPLATE"} \
   --env BRIDGE_ES_URL="$(val esUrl)" \
   --env BRIDGE_AGENT_ID="$(val agentId)" \
   --env ELASTIC_KIBANA_HOST="$(val kibanaHost)" \
-  --kit ghcr.io/dirien/infrastructure-kit:v0.10.5 \
+  --kit ghcr.io/dirien/infrastructure-kit:v0.10.8 \
   --kit "$KIT" \
   claude "$ws"
 
