@@ -75,12 +75,13 @@ mem_remember() {
 }
 
 # ES|QL's DECAY takes a time_duration (milliseconds up to hours); a date
-# period like "45d" is rejected. Turn 45d / 12h / 90m into "1080 hours" etc.
-# Anything else is passed through as an ES|QL literal.
+# period like "45d" is rejected. Turn 6w / 45d / 12h / 90m into "1008 hours",
+# "1080 hours" etc. Anything else is passed through as an ES|QL literal.
 _esql_decay_duration() {
   local window="$1" num="${1%?}"
   [[ "$num" =~ ^[0-9]+$ ]] || { echo "$window"; return; }
   case "$window" in
+    *w) echo "$(( num * 168 )) hours" ;;
     *d) echo "$(( num * 24 )) hours" ;;
     *h) echo "$num hours" ;;
     *m) echo "$num minutes" ;;

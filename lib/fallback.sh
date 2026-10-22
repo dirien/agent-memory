@@ -76,16 +76,22 @@ fallback_sync() {
 
       bulk_body+="{\"index\": {\"_index\": \"$index\", \"_id\": \"$doc_id\"}}"$'\n'
       bulk_body+="$doc"$'\n'
-      ((count++))
+      # Not ((count++)): it returns 1 when count is 0, which exits under set -e
+      count=$((count + 1))
     done
 
     if [[ $count -eq 0 ]]; then
       continue
     fi
 
-    # Send bulk request
+    # Send bulk request. curl's non-zero exit (ES unreachable) would end the
+    # script under set -e; keep the files queued and report instead.
     local result
-    result="$(es_bulk "$bulk_body")"
+    if ! result="$(es_bulk "$bulk_body")" || [[ -z "$result" ]]; then
+      echo "ES unreachable — kept $count queued documents in $agent_dir" >&2
+      total_failed=$((total_failed + count))
+      continue
+    fi
     local has_errors
     has_errors="$(echo "$result" | jq '.errors')"
 
@@ -103,12 +109,12 @@ fallback_sync() {
         item_error="$(echo "$result" | jq ".items[$i].index.error // null")"
         if [[ "$item_error" == "null" ]]; then
           mv "$f" "$synced_dir/"
-          ((total_synced++))
+          total_synced=$((total_synced + 1))
         else
-          ((total_failed++))
+          total_failed=$((total_failed + 1))
           echo "Failed: $(basename "$f") — $item_error" >&2
         fi
-        ((i++))
+        i=$((i + 1))
       done
     fi
   done
@@ -121,10 +127,12 @@ fallback_sync() {
   echo "Synced $total_synced documents."
   [[ $total_failed -gt 0 ]] && echo "Failed: $total_failed documents." >&2
 
-  # Git commit the synced files
-  if command -v git &>/dev/null && [[ -d "$BRIDGE_FALLBACK_DIR/../.git" ]]; then
-    git -C "$BRIDGE_DIR" add fallback/
-    git -C "$BRIDGE_DIR" diff --cached --quiet || \
-      git -C "$BRIDGE_DIR" commit -m "bridge: sync $total_synced queued documents" --quiet
+  # Git commit the synced files, only where fallback/ is tracked. In a clone
+  # that ignores it (this fork's .gitignore) `git add` fails; skip instead of
+  # exiting under set -e. Commit only fallback/, never other staged work.
+  if command -v git &>/dev/null && [[ -d "$BRIDGE_FALLBACK_DIR/../.git" ]] \
+    && git -C "$BRIDGE_DIR" add fallback/ >/dev/null 2>&1; then
+    git -C "$BRIDGE_DIR" diff --cached --quiet -- fallback/ || \
+      git -C "$BRIDGE_DIR" commit -m "bridge: sync $total_synced queued documents" --quiet -- fallback/ || true
   fi
 }

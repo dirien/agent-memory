@@ -119,8 +119,9 @@ cmd_status() {
   # Count queued files
   local queued=0
   local _files
-  # find fails when fallback/ doesn't exist yet (fresh clone); that's 0 queued, not an error
-  _files="$(find "$BRIDGE_FALLBACK_DIR" -path "*/outbox/*.json" -type f 2>/dev/null || true)"
+  # find fails when fallback/ doesn't exist yet (fresh clone); that's 0 queued, not an error.
+  # outbox/.synced/ holds what `bridge sync` already sent; those aren't queued.
+  _files="$(find "$BRIDGE_FALLBACK_DIR" -path "*/outbox/*.json" ! -path "*/.synced/*" -type f 2>/dev/null || true)"
   if [[ -n "$_files" ]]; then
     queued="$(echo "$_files" | wc -l | tr -d ' ')"
   fi
