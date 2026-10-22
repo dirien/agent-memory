@@ -106,7 +106,7 @@ pass along with the project.
 
 ## Notes
 
-- `elastic/elasticstack` 0.16.5 runs on the `terraform-provider` 1.3.0 bridge plugin, pinned in
+- `elastic/elasticstack` 0.16.6 runs on the `terraform-provider` 1.3.0 bridge plugin, pinned in
   `sdks/elasticstack/hcl.sdk.json`. From 0.16.1 on, the provider ships
   `elasticsearch_query_ruleset` with a required `_id` attribute, which
   `terraform-provider` 1.4.0 rejects

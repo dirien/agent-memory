@@ -14,8 +14,8 @@ resource "elasticstack_kibana_dashboard" "overview" {
   }
 
   query = {
-    language = "kql"
-    text     = ""
+    language   = "kql"
+    expression = ""
   }
 
   refresh_interval = {

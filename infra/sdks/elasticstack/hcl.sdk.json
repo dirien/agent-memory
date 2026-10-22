@@ -6,8 +6,8 @@
   "Checksums": null,
   "Parameterization": {
     "Name": "elasticstack",
-    "Version": "0.16.5",
-    "Value": "eyJyZW1vdGUiOnsidXJsIjoicmVnaXN0cnkub3BlbnRvZnUub3JnL2VsYXN0aWMvZWxhc3RpY3N0YWNrIiwidmVyc2lvbiI6IjAuMTYuNSJ9fQ=="
+    "Version": "0.16.6",
+    "Value": "eyJyZW1vdGUiOnsidXJsIjoicmVnaXN0cnkub3BlbnRvZnUub3JnL2VsYXN0aWMvZWxhc3RpY3N0YWNrIiwidmVyc2lvbiI6IjAuMTYuNiJ9fQ=="
   },
   "ExtensionParameterization": null,
   "source": "registry.opentofu.org/elastic/elasticstack"

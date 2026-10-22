@@ -11,7 +11,7 @@ terraform {
     # re-resolves to 1.4.0 and fails.
     elasticstack = {
       source  = "elastic/elasticstack"
-      version = "0.16.5"
+      version = "0.16.6"
     }
     # Generic REST provider for the one Kibana object elasticstack can't create
     # yet: the .http connector Workflows need (see curation.tf).
@@ -22,7 +22,7 @@ terraform {
     # Native Pulumi package: writes the ESC environment the agents read.
     pulumiservice = {
       source  = "pulumi/pulumiservice"
-      version = "1.4.0"
+      version = "1.5.0"
     }
   }
 }
